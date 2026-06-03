@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suivi de Formation HACCP – DPN</title>
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HACCP DPN">
+<meta name="theme-color" content="#1d4ed8">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+:root {
+  --blue: #1d4ed8; --blue-light: #dbeafe; --blue-mid: #2563eb;
+  --green: #15803d; --green-light: #dcfce7; --green-btn: #16a34a;
+  --red: #b91c1c; --red-light: #fee2e2; --red-btn: #dc2626;
+  --orange: #c2410c; --orange-light: #ffedd5; --orange-btn: #ea580c;
+  --gray: #6b7280; --gray-light: #f3f4f6; --border: #e5e7eb;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f1f5f9; color: #1e293b; min-height: 100vh; }
+h1 { font-size: 1.1rem; font-weight: 700; }
+h2 { font-size: 1rem; font-weight: 700; }
+h3 { font-size: .9rem; font-weight: 600; text-transform: uppercase; color: var(--gray); letter-spacing: .04em; }
+
+/* ── LAYOUT ── */
+#screen-session, #screen-chapters, #screen-chapter, #screen-summary { display: none; }
+#screen-session.active, #screen-chapters.active, #screen-chapter.active, #screen-summary.active { display: block; }
+
+.topbar {
+  background: var(--blue); color: #fff; padding: .75rem 1rem;
+  display: flex; align-items: center; gap: .75rem; position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 8px #0003;
+}
+.topbar .back-btn {
+  background: #ffffff30; border: none; color: #fff; border-radius: 6px;
+  padding: .3rem .6rem; cursor: pointer; font-size: .85rem;
+}
+.topbar h1 { flex: 1; font-size: .95rem; }
+.topbar .logo { font-size: 1.3rem; font-weight: 800; background: #fff; color: var(--blue); border-radius: 6px; padding: .15rem .5rem; }
+
+.container { max-width: 720px; margin: 0 auto; padding: 1rem; }
+
+/* ── SESSION FORM ── */
+.session-card {
+  background: #fff; border-radius: 14px; padding: 1.5rem; box-shadow: 0 2px 12px #0001; margin-bottom: 1rem;
+}
+.session-card .logo-big { text-align: center; margin-bottom: 1rem; }
+.session-card .logo-big span { font-size: 2rem; font-weight: 900; color: var(--blue); }
+.session-card h2 { text-align: center; margin-bottom: .3rem; font-size: 1.05rem; }
+.session-card .subtitle { text-align: center; color: var(--gray); font-size: .8rem; margin-bottom: 1.5rem; }
+label { display: block; font-size: .82rem; font-weight: 600; color: #374151; margin-bottom: .25rem; margin-top: .75rem; }
+input[type=text], input[type=date], textarea, select {
+  width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: .55rem .7rem;
+  font-size: .9rem; font-family: inherit; color: #1e293b; background: #fff;
+  transition: border-color .15s;
+}
+input:focus, textarea:focus { outline: none; border-color: var(--blue-mid); }
+.stagiaires-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.btn-primary {
+  display: block; width: 100%; background: var(--blue-mid); color: #fff; border: none;
+  border-radius: 10px; padding: .85rem; font-size: 1rem; font-weight: 700; cursor: pointer;
+  margin-top: 1.25rem; transition: background .15s; letter-spacing: .01em;
+}
+.btn-primary:hover { background: var(--blue); }
+.btn-secondary {
+  background: var(--gray-light); color: #374151; border: 1.5px solid var(--border);
+  border-radius: 10px; padding: .7rem; font-size: .9rem; font-weight: 600; cursor: pointer; transition: background .15s;
+}
+.btn-secondary:hover { background: var(--border); }
+
+/* ── CHAPTER LIST ── */
+.session-banner {
+  background: var(--blue-light); border-radius: 12px; padding: .9rem 1rem; margin-bottom: 1rem;
+  border: 1px solid #bfdbfe;
+}
+.session-banner .info { font-size: .82rem; color: #1e3a8a; }
+.session-banner .info strong { display: inline-block; min-width: 90px; }
+.progress-bar { background: var(--border); border-radius: 99px; height: 6px; margin-top: .5rem; overflow: hidden; }
+.progress-fill { background: var(--green-btn); height: 100%; border-radius: 99px; transition: width .3s; }
+
+.chapter-list { display: flex; flex-direction: column; gap: .5rem; }
+.chapter-item {
+  background: #fff; border-radius: 12px; padding: 1rem; cursor: pointer;
+  border: 2px solid var(--border); display: flex; align-items: center; gap: .8rem;
+  transition: border-color .15s, box-shadow .15s;
+}
+.chapter-item:hover { border-color: var(--blue-mid); box-shadow: 0 2px 8px #2563eb20; }
+.chapter-item.done { border-color: var(--green-btn); background: var(--green-light); }
+.chapter-item.partial { border-color: var(--orange-btn); }
+.chapter-num { width: 36px; height: 36px; border-radius: 50%; background: var(--blue-light); color: var(--blue); font-weight: 800; font-size: .85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.chapter-item.done .chapter-num { background: var(--green-btn); color: #fff; }
+.chapter-info { flex: 1; }
+.chapter-info h2 { font-size: .9rem; }
+.chapter-info .quiz-score { font-size: .75rem; color: var(--gray); margin-top: .15rem; }
+.chapter-status { font-size: 1.2rem; }
+
+.summary-btn {
+  background: #fff; border: 2px solid var(--blue-mid); border-radius: 12px; padding: 1rem;
+  cursor: pointer; text-align: center; font-weight: 700; color: var(--blue-mid); font-size: .95rem;
+  margin-top: .5rem; width: 100%; transition: background .15s;
+}
+.summary-btn:hover { background: var(--blue-light); }
+
+/* ── CHAPTER DETAIL ── */
+.chapter-header { background: #fff; border-radius: 12px; padding: 1rem; margin-bottom: .75rem; border-left: 4px solid var(--blue-mid); }
+.chapter-header .obj { font-size: .82rem; color: #374151; margin-top: .3rem; }
+.chapter-header .obj strong { color: var(--blue); }
+
+.section-block { background: #fff; border-radius: 12px; padding: 1rem; margin-bottom: .75rem; }
+.section-title { font-size: .8rem; font-weight: 700; text-transform: uppercase; color: var(--blue); letter-spacing: .05em; margin-bottom: .75rem; padding-bottom: .5rem; border-bottom: 1px solid var(--border); }
+
+.point-item { margin-bottom: .9rem; padding-bottom: .9rem; border-bottom: 1px solid #f1f5f9; }
+.point-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.point-question { font-size: .88rem; font-weight: 600; margin-bottom: .3rem; }
+.point-details { font-size: .78rem; color: var(--gray); margin-bottom: .5rem; padding-left: .8rem; }
+.point-details li { margin-bottom: .15rem; }
+
+.ons-buttons { display: flex; gap: .4rem; margin-bottom: .5rem; }
+.ons-btn {
+  flex: 1; padding: .45rem; border: 2px solid var(--border); border-radius: 8px;
+  font-weight: 700; font-size: .8rem; cursor: pointer; background: #fff; transition: all .15s; text-align: center;
+}
+.ons-btn.oui.active { background: var(--green-light); border-color: var(--green-btn); color: var(--green); }
+.ons-btn.non.active { background: var(--red-light); border-color: var(--red-btn); color: var(--red); }
+.ons-btn.so.active { background: var(--orange-light); border-color: var(--orange-btn); color: var(--orange); }
+.point-comment { width: 100%; font-size: .8rem; border: 1.5px solid var(--border); border-radius: 6px; padding: .4rem .55rem; font-family: inherit; resize: vertical; min-height: 44px; }
+.point-comment:focus { outline: none; border-color: var(--blue-mid); }
+
+/* ── MICROPHONE ── */
+.comment-wrapper { position: relative; }
+.mic-btn {
+  position: absolute; right: .35rem; bottom: .35rem;
+  width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer;
+  font-size: .95rem; display: flex; align-items: center; justify-content: center;
+  background: var(--gray-light); color: var(--gray); transition: all .15s; z-index: 2;
+  box-shadow: 0 1px 4px #0002;
+}
+.mic-btn:hover { background: var(--blue-light); color: var(--blue-mid); }
+.mic-btn.listening { background: var(--red-btn); color: #fff; animation: pulse-mic .8s infinite; }
+.mic-btn.no-support { opacity: .35; cursor: not-allowed; }
+@keyframes pulse-mic { 0%,100%{box-shadow:0 0 0 0 #dc262640} 50%{box-shadow:0 0 0 7px #dc262600} }
+
+/* Tooltip micro */
+.mic-tip {
+  position: fixed; bottom: 4.5rem; left: 50%; transform: translateX(-50%);
+  background: #1e293b; color: #fff; padding: .5rem 1rem; border-radius: 20px;
+  font-size: .8rem; font-weight: 600; z-index: 9999; pointer-events: none;
+  display: none; white-space: nowrap;
+}
+.mic-tip.visible { display: block; }
+
+/* ── QUIZ ── */
+.quiz-section { background: #fff; border-radius: 12px; padding: 1rem; margin-bottom: .75rem; border: 2px solid var(--blue-light); }
+.quiz-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.quiz-badge { background: var(--blue-mid); color: #fff; border-radius: 6px; padding: .25rem .6rem; font-size: .75rem; font-weight: 700; }
+.quiz-total { font-size: .8rem; color: var(--gray); }
+
+.quiz-question { margin-bottom: 1rem; padding: .75rem; background: var(--gray-light); border-radius: 10px; }
+.quiz-q-num { font-size: .72rem; font-weight: 700; color: var(--blue); text-transform: uppercase; margin-bottom: .3rem; }
+.quiz-q-text { font-size: .88rem; font-weight: 600; margin-bottom: .6rem; }
+
+.quiz-choices { display: flex; flex-direction: column; gap: .35rem; margin-bottom: .6rem; }
+.quiz-choice {
+  display: flex; align-items: center; gap: .5rem; padding: .45rem .6rem; border-radius: 7px;
+  border: 1.5px solid var(--border); background: #fff; font-size: .82rem; cursor: pointer; transition: all .1s;
+}
+.quiz-choice.correct-highlight { background: var(--green-light); border-color: var(--green-btn); }
+.quiz-choice input[type=checkbox] { accent-color: var(--blue-mid); width: 15px; height: 15px; flex-shrink: 0; }
+
+.answer-key-btn {
+  font-size: .75rem; color: var(--blue-mid); background: none; border: 1px solid var(--blue-mid);
+  border-radius: 5px; padding: .2rem .5rem; cursor: pointer; margin-bottom: .6rem;
+}
+.answer-key { display: none; font-size: .75rem; color: var(--green); background: var(--green-light); border-radius: 6px; padding: .4rem .6rem; margin-bottom: .6rem; }
+.answer-key.visible { display: block; }
+
+.stagiaire-scores { display: flex; gap: .4rem; flex-wrap: wrap; }
+.stag-score-block { flex: 1; min-width: 80px; }
+.stag-score-label { font-size: .7rem; color: var(--gray); font-weight: 600; margin-bottom: .2rem; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.score-btns { display: flex; gap: .25rem; }
+.score-btn {
+  flex: 1; padding: .4rem; border-radius: 6px; border: 2px solid var(--border);
+  font-weight: 700; font-size: .8rem; cursor: pointer; background: #fff; text-align: center; transition: all .1s;
+}
+.score-btn.active-0 { background: var(--red-light); border-color: var(--red-btn); color: var(--red); }
+.score-btn.active-2 { background: var(--green-light); border-color: var(--green-btn); color: var(--green); }
+
+.quiz-chapter-total {
+  display: flex; justify-content: flex-end; gap: .5rem; flex-wrap: wrap; margin-top: .5rem;
+  padding-top: .5rem; border-top: 1px solid var(--border);
+}
+.stag-total-chip {
+  font-size: .78rem; font-weight: 700; padding: .25rem .6rem; border-radius: 20px;
+  background: var(--gray-light); border: 1px solid var(--border);
+}
+.stag-total-chip.acquis { background: var(--green-light); border-color: var(--green-btn); color: var(--green); }
+.stag-total-chip.en-cours { background: var(--orange-light); border-color: var(--orange-btn); color: var(--orange); }
+.stag-total-chip.non-acquis { background: var(--red-light); border-color: var(--red-btn); color: var(--red); }
+
+/* ── OBSERVATIONS ── */
+.obs-section { background: #fff; border-radius: 12px; padding: 1rem; margin-bottom: .75rem; }
+
+/* ── NAV CHAPTER ── */
+.chapter-nav { display: flex; gap: .5rem; margin-top: .75rem; }
+.chapter-nav button { flex: 1; }
+
+/* ── SUMMARY ── */
+.summary-card { background: #fff; border-radius: 12px; padding: 1rem; margin-bottom: .75rem; }
+.summary-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+.summary-table th { background: var(--blue-light); color: var(--blue); text-align: left; padding: .5rem .6rem; font-size: .72rem; }
+.summary-table td { padding: .45rem .6rem; border-bottom: 1px solid var(--border); }
+.summary-table tr:last-child td { border-bottom: none; }
+.badge { display: inline-block; border-radius: 20px; padding: .15rem .5rem; font-size: .7rem; font-weight: 700; }
+.badge.acquis { background: var(--green-light); color: var(--green); }
+.badge.en-cours { background: var(--orange-light); color: var(--orange); }
+.badge.non-acquis { background: var(--red-light); color: var(--red); }
+
+/* ── PRINT ── */
+@media print {
+  .topbar, .btn-primary, .btn-secondary, .chapter-nav, .answer-key-btn, .score-btns, .summary-btn, #print-btn, .back-btn { display: none !important; }
+  body { background: #fff; font-size: 11px; }
+  .container { padding: 0; max-width: 100%; }
+  .section-block, .quiz-section, .summary-card, .chapter-header, .obs-section { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 400px) {
+  .stagiaires-grid { grid-template-columns: 1fr; }
+  .stagiaire-scores { gap: .3rem; }
+  .stag-score-block { min-width: 60px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ SESSION SETUP ═══════════════════════════════ -->
+<div id="screen-session" class="active">
+  <div class="container" style="padding-top:1.5rem; padding-bottom:2rem;">
+    <div class="session-card">
+      <div class="logo-big"><span>DPN</span></div>
+      <h2>Suivi de Formation</h2>
+      <p class="subtitle">Hygiène et Système HACCP — V5.2</p>
+
+      <label>Nom de l'enseigne</label>
+      <input type="text" id="enseigne" placeholder="Ex : Boulangerie Martin">
+
+      <label>Date de formation</label>
+      <input type="date" id="date-formation">
+
+      <label>Nom du formateur</label>
+      <input type="text" id="formateur" placeholder="Prénom NOM">
+
+      <label>Nombre de stagiaires</label>
+      <select id="nb-stagiaires" onchange="updateStagiairesFields()">
+        <option value="1">1 stagiaire</option>
+        <option value="2" selected>2 stagiaires</option>
+        <option value="3">3 stagiaires</option>
+        <option value="4">4 stagiaires</option>
+      </select>
+
+      <div id="stagiaires-fields" class="stagiaires-grid" style="margin-top:.5rem;">
+        <div><label>Stagiaire 1</label><input type="text" class="stag-name" placeholder="Prénom NOM"></div>
+        <div><label>Stagiaire 2</label><input type="text" class="stag-name" placeholder="Prénom NOM"></div>
+      </div>
+
+      <button class="btn-primary" onclick="startSession()">Démarrer la formation →</button>
+      <div style="text-align:center;margin-top:.75rem">
+        <label style="display:inline-block;cursor:pointer;color:var(--blue-mid);font-size:.82rem;font-weight:600;text-decoration:underline">
+          📂 Reprendre une session sauvegardée (.json)
+          <input type="file" accept=".json" style="display:none" onchange="importSession(event)">
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ CHAPTER LIST ═══════════════════════════════ -->
+<div id="screen-chapters">
+  <div class="topbar">
+    <span class="logo">DPN</span>
+    <h1>Formation HACCP</h1>
+    <button class="back-btn" onclick="exportToWord()" title="Exporter en Word" style="background:#15803d90">📄</button>
+    <button class="back-btn" onclick="exportSession()" title="Sauvegarde JSON">📥</button>
+  </div>
+  <div class="container">
+    <div class="session-banner" id="session-banner"></div>
+    <div class="chapter-list" id="chapter-list"></div>
+    <button class="summary-btn" onclick="showSummary()">📊 Voir le bilan de formation</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ CHAPTER DETAIL ═══════════════════════════════ -->
+<div id="screen-chapter">
+  <div class="topbar">
+    <button class="back-btn" onclick="showChapters()">← Retour</button>
+    <h1 id="chapter-topbar-title">Chapitre</h1>
+  </div>
+  <div class="container" id="chapter-content"></div>
+</div>
+
+<!-- ═══════════════════════════════ SUMMARY ═══════════════════════════════ -->
+<div id="screen-summary">
+  <div class="topbar">
+    <button class="back-btn" onclick="showChapters()">← Retour</button>
+    <h1>Bilan de formation</h1>
+  </div>
+  <div class="container" id="summary-content"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════════════════════
+const CHAPTERS = [
+  {
+    id: 1,
+    title: "Hygiène des manipulateurs",
+    objective: "Limiter l'apport de germes provenant des manipulateurs.",
+    sections: [
+      {
+        title: "LAVAGE DES MAINS",
+        points: [
+          { text: "Le personnel se lave-t-il les mains efficacement et fréquemment ?", details: ["À la reprise du travail", "À la sortie des toilettes", "Après manipulation de cartons, matériels sales, poubelles, déchets, produits chimiques", "Après manipulation de matières premières contaminantes (œufs, volailles, légumes)", "Avant manipulation de produits sensibles (hachage, sous vide)"] },
+          { text: "Le poste de lavage des mains est-il équipé ?", details: ["Déclenchement de l'eau non manuel (fémorale, pédale)", "Savon liquide", "Brosse à ongles", "Système d'essuyage à usage unique", "Poubelle à commande non-manuelle"] }
+        ]
+      },
+      {
+        title: "PROPRETÉ CORPORELLE",
+        points: [
+          { text: "Le personnel a-t-il une hygiène corporelle satisfaisante ?", details: ["Ongles courts et propres", "Blessures protégées (pansement + doigtier)", "Cheveux propres et retenus"] }
+        ]
+      },
+      {
+        title: "TENUE DE TRAVAIL ET EPI",
+        points: [
+          { text: "Le personnel porte-t-il une tenue propre et complète ?", details: ["Pantalon", "Veste ou chemise", "Calot ou charlotte", "Chaussures de sécurité", "Tablier"] }
+        ]
+      }
+    ],
+    quiz: {
+      title: "Hygiène des manipulateurs",
+      questions: [
+        { q: "Les mains peuvent se contaminer au contact :", choices: ["Du Gel Hydroalcoolique", "Des cartons", "Des légumes et des œufs"], correct: [1,2], key: "Des cartons et des légumes/œufs" },
+        { q: "Que faut-il faire en cas de coupure bénigne à la main ?", choices: ["Désinfecter et mettre un pansement", "Contacter le ministre de la Santé", "Couvrir le pansement d'un doigtier ou d'un gant"], correct: [0,2], key: "Désinfecter + pansement + doigtier/gant" },
+        { q: "Pourquoi est-il important d'avoir une tenue de travail dédiée ?", choices: ["Pour éviter de confondre salariés et clients", "Pour éviter d'importer des germes de l'extérieur", "Pour se protéger en cas d'incident"], correct: [1,2], key: "Éviter germes extérieurs + se protéger" }
+      ]
+    }
+  },
+  {
+    id: 2,
+    title: "Nettoyage et désinfection des locaux",
+    objective: "Limiter l'apport des germes provenant des matériels et des locaux.",
+    sections: [
+      {
+        title: "SYSTÈME ET PLAN DE NETTOYAGE-DÉSINFECTION",
+        points: [
+          { text: "Un système de nettoyage-désinfection (centrale ou canon à mousse) existe-t-il ?" },
+          { text: "Un plan de nettoyage-désinfection est-il en place ?", details: ["La fréquence des nettoyages (locaux, matériel) est-elle adaptée ?", "Le TACT est-il connu et respecté ?", "Les produits et matériels utilisés sont-ils adaptés et en bon état ?"] },
+          { text: "Les postes de lavage des mains sont-ils en nombre suffisant ?" }
+        ]
+      },
+      {
+        title: "PROPRETÉ DES LOCAUX ET DU MATÉRIEL",
+        points: [
+          { text: "Les locaux (murs, sols, plafond) sont-ils dans un état de propreté satisfaisant ?" },
+          { text: "Les surfaces sont-elles faciles à nettoyer et aptes au contact alimentaire ?" },
+          { text: "Le matériel est-il en bon état, régulièrement nettoyé et démonté si besoin ?" },
+          { text: "Le personnel a-t-il été sensibilisé au nettoyage et à la désinfection ?" }
+        ]
+      }
+    ],
+    quiz: {
+      title: "Nettoyage des locaux",
+      questions: [
+        { q: "Le plan de nettoyage sert à :", choices: ["Faire croire que c'est propre", "Définir qui, quand, quoi et comment nettoyer"], correct: [1], key: "Définir qui, quand, quoi et comment nettoyer" },
+        { q: "Que signifie l'acronyme TACT ?", choices: ["Toujours Ami C'est Top", "Température, Action mécanique, Concentration, Temps d'action", "Traitement Aérosol Concret Trimestriel"], correct: [1], key: "Température, Action mécanique, Concentration, Temps d'action" },
+        { q: "Que fait un désinfectant ?", choices: ["Il nourrit les bactéries", "Il complète le nettoyage", "Il tue les bactéries"], correct: [1,2], key: "Il complète le nettoyage ET tue les bactéries" }
+      ]
+    }
+  },
+  {
+    id: 3,
+    title: "Organisation du travail",
+    objective: "Éviter la contamination croisée entre produits de niveaux de contamination différents.",
+    sections: [
+      {
+        title: "SÉPARATION PRODUITS CRUS / CUITS",
+        points: [
+          { text: "Les produits de niveaux de contamination différents sont-ils préparés à des endroits différents ? (marche en avant dans l'espace)" },
+          { text: "Sont-ils préparés à des moments différents ? (marche en avant dans le temps)" },
+          { text: "Si marche en avant dans le temps, les opérations sont-elles séparées par un nettoyage/désinfection ?" }
+        ]
+      },
+      {
+        title: "SÉPARATION DES SECTEURS PROPRES ET SALES",
+        points: [
+          { text: "Les secteurs propres et sales sont-ils séparés dans le temps ou dans l'espace ?" }
+        ]
+      }
+    ],
+    quiz: null
+  },
+  {
+    id: 4,
+    title: "Disposition des postes de travail",
+    objective: "Éviter que l'organisation des postes de travail ne soit une source de contamination indirecte.",
+    sections: [
+      {
+        title: "DISPOSITION ET ÉTAT DES POSTES",
+        points: [
+          { text: "La disposition et la conception des postes de travail sont-elles judicieuses et adaptées ?" },
+          { text: "Les produits sensibles sont-ils travaillés à l'écart des sources de contamination directe ?" },
+          { text: "Le renouvellement de l'air est-il suffisant ?" },
+          { text: "L'évacuation des eaux se fait-elle correctement ? Les tuyauteries sont-elles en bon état ?" },
+          { text: "Les zones à l'aplomb des postes de travail sont-elles en bon état ? (peintures, carrelage, joints, étagères)" }
+        ]
+      }
+    ],
+    quiz: {
+      title: "Organisation et disposition des postes de travail",
+      questions: [
+        { q: "Qu'appelle-t-on le principe de marche en avant ?", choices: ["Un parti politique français", "La progression logique d'un aliment, sans retour en arrière ni croisement circuit propre/circuit sale"], correct: [1], key: "Progression logique, sans croisement propre/sale" },
+        { q: "Une contamination croisée, c'est :", choices: ["Une blessure qui m'a empêché de devenir footballeur", "Par exemple un carton de livraison posé sur un plan de travail"], correct: [1], key: "Ex : carton de livraison posé sur plan de travail" },
+        { q: "Quelles sont les zones considérées comme zones sales ?", choices: ["La vitrine réfrigérée", "Le local poubelle", "La réserve sèche", "Le lave-mains"], correct: [1,3], key: "Le local poubelle et le lave-mains" }
+      ]
+    }
+  },
+  {
+    id: 5,
+    title: "Vérification des produits à réception",
+    objective: "Réduire la contamination en vérifiant les produits et les conditions de livraison.",
+    sections: [
+      {
+        title: "MATIÈRES PREMIÈRES",
+        points: [
+          { text: "Lors de la réception et de l'utilisation, les points suivants sont-ils vérifiés ?", details: ["L'aspect, la couleur et l'odeur", "La séparation des produits d'origines différentes", "L'état des emballages et des conditionnements", "Les DLC / DLUO / DDM", "La température des produits"] },
+          { text: "En cas d'anomalie, les produits sont-ils refusés ou écartés ?" }
+        ]
+      },
+      {
+        title: "MOYENS DE TRANSPORT DES FOURNISSEURS",
+        points: [
+          { text: "Les conditions de transport sont-elles adaptées au maintien en température ? (camion frigo, caisson isotherme)" },
+          { text: "L'état de propreté du camion et du livreur sont-ils corrects ?" },
+          { text: "Les fournisseurs sont-ils identifiés ?" }
+        ]
+      }
+    ],
+    quiz: {
+      title: "Vérification des produits à réception",
+      questions: [
+        { q: "Comment vérifier le respect de la chaîne du froid à la livraison ?", choices: ["Prendre la température des produits", "Prendre la température du livreur"], correct: [0], key: "Prendre la température des produits" },
+        { q: "Comment identifier les produits susceptibles d'atteindre la santé des consommateurs ?", choices: ["Je goûte tous les produits reçus", "Je vérifie les DLC", "Je regarde si les produits respirent encore"], correct: [1], key: "Vérifier les DLC" },
+        { q: "Dans quel cas puis-je refuser un produit à réception ?", choices: ["Une boîte de conserve cabossée", "Un sachet ouvert ou percé", "Si le produit pèse plus de 500g"], correct: [0,1], key: "Boîte cabossée ou sachet ouvert/percé" }
+      ]
+    }
+  },
+  {
+    id: 6,
+    title: "Traçabilité des produits",
+    objective: "Outil de maîtrise de la sécurité, de gestion de crise, d'information et d'étiquetage.",
+    sections: [
+      {
+        title: "MAÎTRISE DE LA SÉCURITÉ",
+        points: [
+          { text: "Des mesures de traçabilité sont-elles existantes et connues du personnel ?" },
+          { text: "Les factures ou bons de livraison sont-ils archivés ? Les étiquettes fournisseurs sont-elles conservées ?" },
+          { text: "Un système de traçabilité en aval est-il en place ? (clients tiers, professionnels)" }
+        ]
+      },
+      {
+        title: "GESTION DE CRISE",
+        points: [
+          { text: "Des méthodes de rappel/retrait sont-elles en place ?" },
+          { text: "Des procédures d'alerte sont-elles définies ? (consommateur, fournisseur)" }
+        ]
+      },
+      {
+        title: "INFORMATION ET ÉTIQUETAGE",
+        points: [
+          { text: "Les produits entamés, préparés à l'avance ou restes conservés en CF sont-ils identifiés ?" },
+          { text: "Les produits non pré-emballés sont-ils correctement étiquetés ?", details: ["Dénomination de vente", "Présence d'allergènes (le cas échéant)", "État physique du produit (décongelé)"] },
+          { text: "Les produits pré-emballés sont-ils correctement étiquetés ?", details: ["Dénomination, Origine, Liste des ingrédients (allergènes en relief)", "Quantité nette, identification opérateur, DLC, N° lot", "Déclaration nutritionnelle"] }
+        ]
+      }
+    ],
+    quiz: {
+      title: "Traçabilité",
+      questions: [
+        { q: "Que signifie traçabilité en milieu alimentaire ?", choices: ["C'est le même principe qu'un colis à la poste", "Identifier et reconstituer le parcours d'un produit de la production à la distribution"], correct: [1], key: "Identifier et reconstituer le parcours d'un produit (fourche → fourchette)" },
+        { q: "Que dois-je faire apparaître sur l'étiquette d'un produit vendu en vitrine ?", choices: ["Dénomination, allergènes (le cas échéant), produit décongelé (le cas échéant)", "La date de production uniquement"], correct: [0], key: "Dénomination + allergènes + mention décongelé si applicable" },
+        { q: "Comment informer mes clients sur les allergènes présents dans mes produits ?", choices: ["Mettre à disposition une liste écrite des produits contenant des allergènes", "Je les apprends par cœur", "Je les laisse deviner"], correct: [0], key: "Liste écrite des allergènes à disposition" }
+      ]
+    }
+  },
+  {
+    id: 7,
+    title: "Rangement des chambres froides et réserves",
+    objective: "Éviter la contamination croisée entre produits lors du stockage ou de l'exposition.",
+    sections: [
+      {
+        title: "CHAMBRES FROIDES, RÉSERVES ET ÉQUIPEMENTS D'EXPOSITION",
+        points: [
+          { text: "Les produits d'origine ou de natures différentes sont-ils stockés dans des enceintes différentes ? Sinon, les produits sont-ils rangés avec soin et protégés ?" },
+          { text: "La capacité de stockage (en particulier au froid) est-elle suffisante ?" },
+          { text: "La fréquence et le volume des approvisionnements sont-ils adaptés à la capacité de stockage ?" }
+        ]
+      },
+      {
+        title: "RANGEMENT DES PRODUITS",
+        points: [
+          { text: "Les produits sont-ils rangés correctement ? (Pas au sol, pas empilés de façon risquée)" },
+          { text: "Les cartons sont-ils à l'écart des denrées alimentaires non protégées ?" },
+          { text: "Les produits sont-ils rangés du moins contaminant en haut au plus contaminant en bas ?" }
+        ]
+      }
+    ],
+    quiz: null
+  },
+  {
+    id: 8,
+    title: "Identification des produits alimentaires",
+    objective: "Identifier les produits, maîtriser la conservation et éviter les pertes.",
+    sections: [
+      {
+        title: "MENTIONS OBLIGATOIRES",
+        points: [
+          { text: "Les produits finis ont-ils les 3 mentions : Dénomination, Date de fabrication, DLC secondaire ?" },
+          { text: "Les matières premières entamées ont-elles les 3 mentions : Dénomination, Date d'ouverture, DLC secondaire ?" }
+        ]
+      },
+      {
+        title: "GESTION DES STOCKS",
+        points: [
+          { text: "Les entrées et sorties de produits suivent-elles la règle du PEPS (Premier Entré, Premier Sorti) ?" },
+          { text: "Les produits sont-ils identifiables rapidement ?" },
+          { text: "Un système de gestion des pertes est-il en place ?" }
+        ]
+      }
+    ],
+    quiz: {
+      title: "Rangement et identification des produits",
+      questions: [
+        { q: "Parmi ces méthodes de rangement, lesquelles sont correctes ?", choices: ["Mettre les légumes en haut de l'étagère", "Séparer et protéger les produits cuits des produits crus", "Ranger du plus contaminant en bas au moins contaminant en haut"], correct: [1,2], key: "Séparer cuits/crus + plus contaminant en bas" },
+        { q: "La DLC d'un produit périme aujourd'hui :", choices: ["Je dois le jeter le lendemain matin", "Je peux encore l'utiliser 2 ou 3 jours après", "Matière première ou produit fini, il est à consommer dans la journée"], correct: [2], key: "À consommer dans la journée" },
+        { q: "Quelles sont les conséquences d'un stockage au sol ?", choices: ["Ils favorisent les contaminations croisées", "Il facilite le nettoyage au sol"], correct: [0], key: "Favorise les contaminations croisées" }
+      ]
+    }
+  },
+  {
+    id: 9,
+    title: "Maîtrise de la chaîne du froid",
+    objective: "Éviter la multiplication des germes pour que leur nombre n'atteigne pas un niveau inacceptable.",
+    sections: [
+      {
+        title: "CHAMBRES FROIDES, FRIGOS ET CONGÉLATEURS",
+        points: [
+          { text: "Avez-vous des frigos/chambres froides positives (température < 4°C) ?" },
+          { text: "Avez-vous des congélateurs/chambres froides négatives (température < -18°C) ?" },
+          { text: "Les installations de froid sont-elles en bon état et nettoyées ? (dégivrage, joints)" }
+        ]
+      },
+      {
+        title: "MAINTIEN DE LA CHAÎNE DU FROID",
+        points: [
+          { text: "Une surveillance de la température des installations est-elle faite régulièrement et notée sur fiche de contrôle ?" },
+          { text: "Les matières premières sont-elles placées dès réception dans les installations ?" },
+          { text: "Les produits sensibles sont-ils refroidis rapidement (cellule de refroidissement) ?" },
+          { text: "La méthode de décongélation est-elle respectée ?" },
+          { text: "Des denrées réfrigérées ou surgelées sont-elles laissées trop longtemps à température ambiante ?" }
+        ]
+      }
+    ],
+    quiz: {
+      title: "Maîtrise de la chaîne du froid",
+      questions: [
+        { q: "Quelle est la bonne méthode de décongélation ?", choices: ["Attendre l'été pour laisser les produits dehors", "Mettre le produit à décongeler dans une enceinte réfrigérée", "Mettre le produit congelé directement en cuisson"], correct: [1], key: "Décongélation en enceinte réfrigérée" },
+        { q: "Comment refroidir un produit sensible ?", choices: ["En le mettant sous la climatisation", "En le faisant descendre à 10°C maximum en moins de 2h"], correct: [1], key: "Descendre à ≤10°C en moins de 2h" },
+        { q: "Comment analyser la bonne température des chambres froides ?", choices: ["Contrôle visuel une fois par semaine", "En remplissant quotidiennement la fiche « Relevé des températures »"], correct: [1], key: "Fiche relevé des températures quotidienne" }
+      ]
+    }
+  },
+  {
+    id: 10,
+    title: "L'origine des dangers",
+    objective: "Identifier et limiter les risques biologiques, physiques, chimiques et allergènes.",
+    sections: [
+      {
+        title: "RISQUE BIOLOGIQUE",
+        points: [
+          { text: "Les produits crus sont-ils séparés des produits cuits ?" },
+          { text: "Les légumes sont-ils décontaminés correctement ?" },
+          { text: "Y a-t-il des produits altérés ? Présence d'eaux stagnantes ?" },
+          { text: "Le matériel de préparation est-il nettoyé et désinfecté de manière systématique ?" },
+          { text: "Les nuisibles peuvent-ils être en contact direct avec les denrées alimentaires ?" }
+        ]
+      },
+      {
+        title: "RISQUE PHYSIQUE (corps étrangers)",
+        points: [
+          { text: "Le plan de travail est-il ordonné ? Les locaux et matériels sont-ils inertes ?" },
+          { text: "Présence de bijoux, piercing, vernis, faux ongles, pansements non couverts ?" }
+        ]
+      },
+      {
+        title: "RISQUE CHIMIQUE",
+        points: [
+          { text: "Des résidus de produits chimiques sont-ils susceptibles d'être en contact direct avec les aliments ?" },
+          { text: "Les produits d'entretien sont-ils aptes au contact alimentaire et correctement étiquetés ?" },
+          { text: "Les sprays de nettoyage sont-ils utilisés de manière adéquate ?" }
+        ]
+      },
+      {
+        title: "RISQUE ALLERGÈNE",
+        points: [
+          { text: "Les matières premières allergènes sont-elles travaillées à l'écart des autres denrées ?" },
+          { text: "Les denrées contenant des allergènes sont-elles identifiées (vrac) et étiquetées en relief (préemballage) ?" }
+        ]
+      }
+    ],
+    quiz: {
+      title: "Origine des dangers",
+      questions: [
+        { q: "Comment s'assurer d'une bonne décontamination des légumes ?", choices: ["Avec de l'eau claire et du vinaigre blanc", "Avec de l'eau claire et du sirop d'orgeat", "Avec de l'eau claire et une solution chlorée correctement dosée"], correct: [2], key: "Eau claire + solution chlorée correctement dosée" },
+        { q: "Quels sont les risques physiques dans les propositions suivantes ?", choices: ["Un cheveu", "Un morceau d'emballage", "Du vernis à ongles", "Un morceau de bois"], correct: [0,1,2,3], key: "Tous : cheveu, emballage, vernis, bois" },
+        { q: "Comment savoir si un produit d'entretien nécessite un rinçage après utilisation ?", choices: ["Prendre connaissance des précautions d'emploi indiquées par le fournisseur", "Composer le 0 800 70 42 48"], correct: [0], key: "Lire les précautions d'emploi du fournisseur" }
+      ]
+    }
+  },
+  {
+    id: 11,
+    title: "Autres bonnes pratiques d'hygiène",
+    objective: "Assurer la gestion des déchets, la plonge et l'hygiène du point de vente.",
+    sections: [
+      {
+        title: "GESTION DES DÉCHETS ET DES POUBELLES",
+        points: [
+          { text: "Le déconditionnement se fait-il en dehors des périodes de préparation ?" },
+          { text: "Les produits déconditionnés sont-ils transvasés dans des récipients propres et couverts ?" },
+          { text: "Les déchets et cartons sont-ils évacués assez souvent de la zone de production ?" },
+          { text: "Les poubelles sont-elles adaptées et en nombre suffisant ? (couvercles non-manuels, sacs plastiques)" }
+        ]
+      },
+      {
+        title: "LA PLONGE",
+        points: [
+          { text: "La plonge est-elle faite à la main ou à la machine ?" },
+          { text: "Si à la main, l'égouttage ou le séchage se font-ils de façon hygiénique ?" }
+        ]
+      },
+      {
+        title: "POINT DE VENTE",
+        points: [
+          { text: "Présence d'un lave-mains et d'un gel hydroalcoolique au point de vente ?" },
+          { text: "La tenue est-elle réservée uniquement à l'activité ?" },
+          { text: "Les enceintes réfrigérées sont-elles nettoyées-désinfectées régulièrement et à bonne température ?" },
+          { text: "Des accessoires de service sont-ils utilisés (pinces, pelles…) ?" },
+          { text: "La gestion des DLC (produits en vitrine) est-elle maîtrisée ?" }
+        ]
+      },
+      {
+        title: "LUTTE CONTRE LES NUISIBLES / ORIGINE DES VIANDES",
+        points: [
+          { text: "Y a-t-il des nuisibles présents dans les locaux ? (insectes, rongeurs, oiseaux)" },
+          { text: "L'origine des viandes bovines est-elle affichée ? (pays de naissance, d'élevage, d'abattage)" }
+        ]
+      }
+    ],
+    quiz: {
+      title: "Autres bonnes pratiques d'hygiène",
+      questions: [
+        { q: "Quelle est l'importance d'une poubelle à commande non manuelle ?", choices: ["On ne manipule pas le couvercle avec les mains", "La poubelle reste fermée, on limite la pollution ambiante", "Ça évite d'y mettre un sac poubelle"], correct: [0,1], key: "Pas de contact manuel + fermeture limitant la pollution" },
+        { q: "Comment égoutter ou sécher la plonge de manière hygiénique ?", choices: ["À l'aide d'un sèche-cheveux", "À l'air libre sur les étagères", "En la retournant pour faciliter son égouttage"], correct: [2], key: "En la retournant pour faciliter l'égouttage" },
+        { q: "Le nettoyage de la vitrine de vente c'est :", choices: ["Occasionnel suivant la propreté visuelle", "Indispensable car j'y stocke des produits finis"], correct: [1], key: "Indispensable (produits finis stockés)" }
+      ]
+    }
+  },
+  {
+    id: 12,
+    title: "Formation du personnel et maintenance",
+    objective: "Assurer la formation du personnel et l'entretien du matériel et des locaux.",
+    sections: [
+      {
+        title: "FORMATION DU PERSONNEL",
+        points: [
+          { text: "Le personnel a-t-il été formé aux bonnes pratiques d'hygiène ?" },
+          { text: "Le personnel travaille-t-il selon les bonnes pratiques d'hygiène ?" },
+          { text: "Le personnel est-il expérimenté ? Y a-t-il un turn-over important ?" }
+        ]
+      },
+      {
+        title: "ÉTAT DU MATÉRIEL, DES LOCAUX ET MAINTENANCE",
+        points: [
+          { text: "Le matériel et les locaux sont-ils en bon état et propres ?" },
+          { text: "Les équipements de mesure sont-ils surveillés (métrologie) ?" },
+          { text: "Y a-t-il des contrats de maintenance avec des sociétés extérieures ? (frigoriste, électricien, extincteurs)" }
+        ]
+      }
+    ],
+    quiz: null
+  },
+  {
+    id: 13,
+    title: "Système documentaire HACCP",
+    objective: "Mettre en place et maintenir un système documentaire pour le suivi de la qualité.",
+    sections: [
+      {
+        title: "SYSTÈME DOCUMENTAIRE",
+        points: [
+          { text: "Un système documentaire pour le suivi de la qualité est-il en place ?" },
+          { text: "Les éléments suivants sont-ils présents et à jour ?", details: ["Fiches de contrôle de température des chambres froides", "Fiches de nettoyage-désinfection", "Analyses microbiologiques sur les produits finis", "Carnets métrologiques", "Notices d'utilisation, plans de nettoyage affichés, étiquettes fournisseurs, attestations de formation"] }
+        ]
+      },
+      {
+        title: "ÉTUDE HACCP",
+        points: [
+          { text: "L'étude HACCP a-t-elle été réalisée (ou est-elle en cours) ?" },
+          { text: "La direction et le personnel ont-ils été formés à l'HACCP ?" },
+          { text: "Un système qualité existe-t-il déjà ? Si oui, de quoi est-il constitué ?" }
+        ]
+      }
+    ],
+    quiz: {
+      title: "HACCP",
+      questions: [
+        { q: "Que signifie l'acronyme HACCP ?", choices: ["Hachage Antérieur du Cas Critique Porcin", "Hazard Analysis Critical Control Point", "Hot Analysis of a Complete Crazy Person"], correct: [1], key: "Hazard Analysis Critical Control Point" },
+        { q: "Que signifie-t-il en français ?", choices: ["Norme contraignante qui ne sert à rien", "Analyse des dangers et maîtrise des points critiques"], correct: [1], key: "Analyse des dangers et maîtrise des points critiques" },
+        { q: "Quels sont les objectifs de cette méthode ?", choices: ["Identifier, analyser et maîtriser les risques alimentaires", "Faire plaisir aux agents des services vétérinaires", "Mettre en place des documents de traçabilité"], correct: [0,2], key: "Identifier/analyser/maîtriser les risques + traçabilité" }
+      ]
+    }
+  },
+  {
+    id: 14,
+    title: "Plan de Maîtrise Sanitaire (PMS)",
+    objective: "Vérifier l'existence et la conformité du Plan de Maîtrise Sanitaire.",
+    sections: [
+      {
+        title: "EXISTENCE ET STRUCTURE DU PMS",
+        points: [
+          { text: "Un PMS écrit est-il en place dans l'établissement ?" },
+          { text: "Le PMS est-il à jour, daté et signé par le responsable ?" },
+          { text: "Le PMS est-il facilement accessible par le personnel ?" },
+          { text: "Les procédures de BPH sont-elles rédigées ? (hygiène du personnel, nettoyage, lutte nuisibles, maintenance)" },
+          { text: "Le plan de nettoyage et désinfection (PND) est-il présent dans le PMS et affiché en cuisine ?" },
+          { text: "Un contrat de dératisation/désinsectisation est-il en place ? Les rapports sont-ils conservés ?" }
+        ]
+      },
+      {
+        title: "TRAÇABILITÉ ET GESTION DES NON-CONFORMITÉS",
+        points: [
+          { text: "Une procédure de traçabilité (amont et aval) est-elle décrite dans le PMS ?" },
+          { text: "Une procédure de rappel/retrait de produits est-elle intégrée au PMS ?" },
+          { text: "Les non-conformités (produits hors température, DLC dépassée…) font-elles l'objet d'un enregistrement ?" },
+          { text: "Une analyse des dangers (HACCP) est-elle réalisée et intégrée au PMS ? (diagrammes de flux, tableaux de dangers)" }
+        ]
+      }
+    ],
+    quiz: {
+      title: "Plan de Maîtrise Sanitaire",
+      questions: [
+        { q: "Qu'est-ce que le Plan de Maîtrise Sanitaire (PMS) ?", choices: ["Un document facultatif que seules les grandes surfaces doivent avoir", "L'ensemble des mesures préventives et de contrôle pour garantir la sécurité alimentaire (BPH + HACCP + traçabilité)", "Personne qui Maîtrise le Service"], correct: [1], key: "Ensemble BPH + HACCP + traçabilité" },
+        { q: "Quels éléments la DDPP vérifie-t-elle en priorité lors d'un contrôle PMS ?", choices: ["La bonne tenue des registres de température", "L'existence et la cohérence du PMS écrit avec les pratiques réelles + éléments de traçabilité et autocontrôles"], correct: [0,1], key: "Registres températures + cohérence PMS + traçabilité" },
+        { q: "Dans quel délai doit-on refroidir un produit cuit avant réfrigération ?", choices: ["Descendre à +10°C en moins de 2h, puis à +4°C en moins de 2h supplémentaires", "On peut le laisser refroidir à température ambiante toute la nuit"], correct: [0], key: "+10°C en < 2h, puis +4°C en < 2h supplémentaires" }
+      ]
+    }
+  }
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════════════
+let session = { enseigne: '', date: '', formateur: '', stagiaires: [] };
+let state = {}; // state[chapterId] = { points: {}, scores: {q: {stag: 0|2}}, obsComment: '' }
+let currentChapterId = null;
+
+function getChapterState(id) {
+  if (!state[id]) state[id] = { points: {}, scores: {}, obsComment: '' };
+  return state[id];
+}
+
+function getPointKey(sIdx, pIdx) { return `${sIdx}_${pIdx}`; }
+
+function chapterProgress(chapter) {
+  const cs = getChapterState(chapter.id);
+  const total = chapter.sections.reduce((n, s) => n + s.points.length, 0);
+  const filled = Object.keys(cs.points).length;
+  return { filled, total };
+}
+
+function quizScores(chapter) {
+  if (!chapter.quiz) return null;
+  const cs = getChapterState(chapter.id);
+  const nq = chapter.quiz.questions.length;
+  return session.stagiaires.map((name, si) => {
+    let score = 0;
+    for (let qi = 0; qi < nq; qi++) {
+      score += (cs.scores[qi] || {})[si] || 0;
+    }
+    return { name, score, max: nq * 2 };
+  });
+}
+
+function scoreBadge(score, max) {
+  if (score >= max * 5 / 6) return 'acquis';
+  if (score >= max * 3 / 6) return 'en-cours';
+  return 'non-acquis';
+}
+function scoreBadgeLabel(level) {
+  return { acquis: 'ACQUIS', 'en-cours': 'EN COURS', 'non-acquis': 'NON ACQUIS' }[level];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('[id^="screen-"]').forEach(el => el.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function updateStagiairesFields() {
+  const nb = parseInt(document.getElementById('nb-stagiaires').value);
+  const container = document.getElementById('stagiaires-fields');
+  container.innerHTML = '';
+  for (let i = 0; i < nb; i++) {
+    const div = document.createElement('div');
+    div.innerHTML = `<label>Stagiaire ${i+1}</label><input type="text" class="stag-name" placeholder="Prénom NOM">`;
+    container.appendChild(div);
+  }
+}
+
+function startSession() {
+  session.enseigne = document.getElementById('enseigne').value || 'Non renseigné';
+  session.date = document.getElementById('date-formation').value || new Date().toISOString().split('T')[0];
+  session.formateur = document.getElementById('formateur').value || 'Non renseigné';
+  session.stagiaires = Array.from(document.querySelectorAll('.stag-name'))
+    .map(i => i.value.trim() || 'Stagiaire')
+    .filter((_, idx) => idx < parseInt(document.getElementById('nb-stagiaires').value));
+  showChapters();
+}
+
+function showChapters() {
+  renderBanner();
+  renderChapterList();
+  showScreen('chapters');
+}
+
+function showChapter(id) {
+  currentChapterId = id;
+  const chapter = CHAPTERS.find(c => c.id === id);
+  document.getElementById('chapter-topbar-title').textContent = `${id}. ${chapter.title}`;
+  renderChapterDetail(chapter);
+  showScreen('chapter');
+}
+
+function showSummary() {
+  renderSummary();
+  showScreen('summary');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RENDER — BANNER & CHAPTER LIST
+// ═══════════════════════════════════════════════════════════════════════════════
+function formatDate(d) {
+  if (!d) return '';
+  const [y, m, day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+function renderBanner() {
+  const totalChapters = CHAPTERS.length;
+  const done = CHAPTERS.filter(c => { const p = chapterProgress(c); return p.filled >= p.total && p.total > 0; }).length;
+  document.getElementById('session-banner').innerHTML = `
+    <div class="info">
+      <strong>Enseigne :</strong> ${session.enseigne}<br>
+      <strong>Date :</strong> ${formatDate(session.date)} &nbsp;|&nbsp; <strong>Formateur :</strong> ${session.formateur}<br>
+      <strong>Stagiaires :</strong> ${session.stagiaires.join(', ')}
+    </div>
+    <div class="progress-bar" style="margin-top:.6rem">
+      <div class="progress-fill" style="width:${Math.round(done/totalChapters*100)}%"></div>
+    </div>
+    <div style="font-size:.72rem;color:#1e3a8a;margin-top:.25rem">${done} / ${totalChapters} chapitres complétés</div>
+  `;
+}
+
+function renderChapterList() {
+  const list = document.getElementById('chapter-list');
+  list.innerHTML = '';
+  CHAPTERS.forEach(chapter => {
+    const prog = chapterProgress(chapter);
+    const scores = quizScores(chapter);
+    const isDone = prog.filled >= prog.total && prog.total > 0;
+    const isPartial = prog.filled > 0 && !isDone;
+    let statusIcon = prog.filled === 0 ? '○' : (isDone ? '✓' : '◑');
+    let scoreText = '';
+    if (scores) {
+      scoreText = scores.map(s => `${s.name.split(' ')[0]}: ${s.score}/${s.max}`).join(' · ');
+    }
+    const item = document.createElement('div');
+    item.className = `chapter-item ${isDone ? 'done' : ''} ${isPartial ? 'partial' : ''}`;
+    item.onclick = () => showChapter(chapter.id);
+    item.innerHTML = `
+      <div class="chapter-num">${chapter.id}</div>
+      <div class="chapter-info">
+        <h2>${chapter.title}</h2>
+        <div class="quiz-score">${prog.filled}/${prog.total} points${scoreText ? ' · Quiz : ' + scoreText : ''}</div>
+      </div>
+      <div class="chapter-status" style="color:${isDone?'var(--green-btn)':isPartial?'var(--orange-btn)':'var(--gray)'}">${statusIcon}</div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RENDER — CHAPTER DETAIL
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderChapterDetail(chapter) {
+  const container = document.getElementById('chapter-content');
+  const cs = getChapterState(chapter.id);
+  let html = `
+    <div class="chapter-header">
+      <h2>${chapter.id}. ${chapter.title}</h2>
+      <div class="obj"><strong>Objectif :</strong> ${chapter.objective}</div>
+    </div>
+  `;
+
+  // Sections with observation points
+  chapter.sections.forEach((section, sIdx) => {
+    html += `<div class="section-block"><div class="section-title">${section.title}</div>`;
+    section.points.forEach((point, pIdx) => {
+      const key = getPointKey(sIdx, pIdx);
+      const val = cs.points[key] || {};
+      const detailsHtml = point.details ? `<ul class="point-details">${point.details.map(d=>`<li>${d}</li>`).join('')}</ul>` : '';
+      html += `
+        <div class="point-item" id="point-${chapter.id}-${sIdx}-${pIdx}">
+          <div class="point-question">${point.text || point.title}</div>
+          ${detailsHtml}
+          <div class="ons-buttons">
+            <button class="ons-btn oui ${val.v==='oui'?'active':''}" onclick="setONS(${chapter.id},${sIdx},${pIdx},'oui')">✓ OUI</button>
+            <button class="ons-btn non ${val.v==='non'?'active':''}" onclick="setONS(${chapter.id},${sIdx},${pIdx},'non')">✗ NON</button>
+            <button class="ons-btn so ${val.v==='so'?'active':''}" onclick="setONS(${chapter.id},${sIdx},${pIdx},'so')">— S/O</button>
+          </div>
+          <div class="comment-wrapper">
+            <textarea class="point-comment" id="ta-${chapter.id}-${sIdx}-${pIdx}" rows="2" placeholder="Commentaire / action corrective…" style="padding-right:2.4rem" onchange="setComment(${chapter.id},${sIdx},${pIdx},this.value)">${val.comment||''}</textarea>
+            <button class="mic-btn ${!SpeechRecognition?'no-support':''}" title="${SpeechRecognition?'Dicter un commentaire':'Dictée non supportée (utilise Chrome ou Edge)'}"
+              onclick="toggleMic(this,document.getElementById('ta-${chapter.id}-${sIdx}-${pIdx}'),${chapter.id},${sIdx},${pIdx})">🎙</button>
+          </div>
+        </div>
+      `;
+    });
+    html += `</div>`;
+  });
+
+  // Quiz
+  if (chapter.quiz) {
+    html += renderQuiz(chapter);
+  }
+
+  // Observations générales
+  html += `
+    <div class="obs-section">
+      <div class="section-title">Observations et recommandations générales</div>
+      <textarea style="width:100%;min-height:80px;font-family:inherit;font-size:.85rem;border:1.5px solid var(--border);border-radius:8px;padding:.5rem .7rem;resize:vertical" placeholder="Saisir les observations et recommandations générales pour cet établissement…" onchange="setObsComment(${chapter.id},this.value)">${cs.obsComment||''}</textarea>
+    </div>
+  `;
+
+  // Navigation
+  const prevChapter = CHAPTERS.find(c => c.id === chapter.id - 1);
+  const nextChapter = CHAPTERS.find(c => c.id === chapter.id + 1);
+  html += `<div class="chapter-nav">`;
+  if (prevChapter) html += `<button class="btn-secondary" onclick="showChapter(${prevChapter.id})">← ${prevChapter.id}. ${prevChapter.title.split(' ').slice(0,3).join(' ')}…</button>`;
+  if (nextChapter) html += `<button class="btn-primary" onclick="showChapter(${nextChapter.id})">${nextChapter.id}. ${nextChapter.title.split(' ').slice(0,3).join(' ')}… →</button>`;
+  else html += `<button class="btn-primary" onclick="showSummary()">Voir le bilan →</button>`;
+  html += `</div><br>`;
+
+  container.innerHTML = html;
+}
+
+function renderQuiz(chapter) {
+  const cs = getChapterState(chapter.id);
+  const scores = quizScores(chapter);
+  let html = `
+    <div class="quiz-section">
+      <div class="quiz-header">
+        <div><h2 style="font-size:.92rem">Quiz — ${chapter.quiz.title}</h2></div>
+        <div class="quiz-badge">Quiz</div>
+      </div>
+  `;
+
+  chapter.quiz.questions.forEach((q, qi) => {
+    html += `<div class="quiz-question">
+      <div class="quiz-q-num">Question ${qi + 1}</div>
+      <div class="quiz-q-text">${q.q}</div>
+      <div class="quiz-choices">
+        ${q.choices.map((c, ci) => `
+          <label class="quiz-choice ${q.correct.includes(ci) ? 'correct-highlight' : ''}">
+            <input type="checkbox" disabled ${q.correct.includes(ci) ? 'checked' : ''}> ${c}
+            ${q.correct.includes(ci) ? '<span style="margin-left:auto;color:var(--green);font-weight:700;font-size:.75rem">✓</span>' : ''}
+          </label>
+        `).join('')}
+      </div>
+      <div style="font-size:.75rem;color:var(--green);background:var(--green-light);border-radius:6px;padding:.35rem .6rem;margin-bottom:.6rem">
+        ✓ Bonne réponse : <strong>${q.key}</strong>
+      </div>
+      <div style="font-size:.78rem;font-weight:600;color:#374151;margin-bottom:.35rem">Score par stagiaire :</div>
+      <div class="stagiaire-scores">
+        ${session.stagiaires.map((name, si) => {
+          const s = (cs.scores[qi] || {})[si];
+          return `
+            <div class="stag-score-block">
+              <div class="stag-score-label" title="${name}">${name.split(' ')[0]}</div>
+              <div class="score-btns">
+                <button class="score-btn ${s===0?'active-0':''}" onclick="setScore(${chapter.id},${qi},${si},0)">0</button>
+                <button class="score-btn ${s===2?'active-2':''}" onclick="setScore(${chapter.id},${qi},${si},2)">2</button>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>`;
+  });
+
+  // Totals
+  html += `<div class="quiz-chapter-total">`;
+  if (scores) {
+    scores.forEach(s => {
+      const level = scoreBadge(s.score, s.max);
+      html += `<div class="stag-total-chip ${level}">${s.name.split(' ')[0]} : ${s.score}/${s.max} — ${scoreBadgeLabel(level)}</div>`;
+    });
+  }
+  html += `</div></div>`;
+  return html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RENDER — SUMMARY
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderSummary() {
+  const container = document.getElementById('summary-content');
+  let totalScores = session.stagiaires.map(() => ({ score: 0, max: 0 }));
+
+  // Build table rows
+  let rows = '';
+  CHAPTERS.forEach(chapter => {
+    const prog = chapterProgress(chapter);
+    const scores = quizScores(chapter);
+    let scoresHtml = '';
+    if (scores) {
+      scores.forEach((s, si) => {
+        const level = scoreBadge(s.score, s.max);
+        totalScores[si].score += s.score;
+        totalScores[si].max += s.max;
+        scoresHtml += `<span class="badge ${level}" style="margin-right:.25rem">${s.name.split(' ')[0]}: ${s.score}/${s.max}</span>`;
+      });
+    } else {
+      scoresHtml = '<span style="color:var(--gray);font-size:.75rem">—</span>';
+    }
+    rows += `<tr>
+      <td><strong>${chapter.id}.</strong> ${chapter.title}</td>
+      <td>${prog.filled}/${prog.total}</td>
+      <td>${scoresHtml}</td>
+    </tr>`;
+  });
+
+  // Global scores
+  let globalHtml = session.stagiaires.map((name, si) => {
+    const t = totalScores[si];
+    const level = scoreBadge(t.score, t.max);
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid var(--border)">
+      <strong>${name}</strong>
+      <div>
+        <span style="font-size:1.1rem;font-weight:800">${t.score}/${t.max}</span>
+        <span class="badge ${level}" style="margin-left:.5rem">${scoreBadgeLabel(level)}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Observations
+  let obsHtml = '';
+  CHAPTERS.forEach(chapter => {
+    const cs = getChapterState(chapter.id);
+    if (cs.obsComment) {
+      obsHtml += `<div style="margin-bottom:.5rem"><strong>${chapter.id}. ${chapter.title}</strong><br><span style="font-size:.82rem;color:#374151">${cs.obsComment}</span></div>`;
+    }
+  });
+
+  container.innerHTML = `
+    <div class="summary-card">
+      <h2 style="margin-bottom:.75rem">Informations session</h2>
+      <div style="font-size:.85rem;line-height:1.8">
+        <strong>Enseigne :</strong> ${session.enseigne}<br>
+        <strong>Date :</strong> ${formatDate(session.date)}<br>
+        <strong>Formateur :</strong> ${session.formateur}<br>
+        <strong>Stagiaires :</strong> ${session.stagiaires.join(', ')}
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <h2 style="margin-bottom:.75rem">Résultats globaux des quiz</h2>
+      ${globalHtml}
+      <div style="font-size:.75rem;color:var(--gray);margin-top:.5rem">
+        0–2 pts : NON ACQUIS · 3–4 pts : EN COURS · 5–6 pts : ACQUIS (par chapitre de 6 pts)
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <h2 style="margin-bottom:.75rem">Détail par chapitre</h2>
+      <div style="overflow-x:auto">
+        <table class="summary-table">
+          <thead><tr><th>Chapitre</th><th>Points obs.</th><th>Score quiz</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+
+    ${obsHtml ? `<div class="summary-card"><h2 style="margin-bottom:.75rem">Observations et recommandations</h2>${obsHtml}</div>` : ''}
+
+    <button class="btn-primary" onclick="exportToWord()" style="margin-bottom:.5rem;background:#15803d">📄 Exporter en Word (.doc)</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem">
+      <button class="btn-primary" id="print-btn" onclick="window.print()">🖨 Imprimer / PDF</button>
+      <button class="btn-secondary" onclick="exportSession()">📥 Sauvegarde (.json)</button>
+    </div>
+    <button class="btn-secondary" onclick="clearSession()" style="width:100%;margin-bottom:.5rem;color:var(--red);border-color:var(--red)">🗑 Nouvelle session</button>
+    <button class="btn-secondary" onclick="showChapters()" style="width:100%;margin-bottom:2rem">← Retour aux chapitres</button>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+function setONS(chId, sIdx, pIdx, val) {
+  const cs = getChapterState(chId);
+  const key = getPointKey(sIdx, pIdx);
+  if (!cs.points[key]) cs.points[key] = {};
+  cs.points[key].v = val;
+  // Update buttons
+  const container = document.getElementById(`point-${chId}-${sIdx}-${pIdx}`);
+  if (!container) return;
+  container.querySelectorAll('.ons-btn').forEach(btn => btn.classList.remove('active'));
+  container.querySelector(`.ons-btn.${val}`).classList.add('active');
+  // Update chapter list progress (if on chapters screen)
+  if (document.getElementById('screen-chapters').classList.contains('active')) renderChapterList();
+}
+
+function setComment(chId, sIdx, pIdx, val) {
+  const cs = getChapterState(chId);
+  const key = getPointKey(sIdx, pIdx);
+  if (!cs.points[key]) cs.points[key] = {};
+  cs.points[key].comment = val;
+}
+
+function setScore(chId, qi, si, score) {
+  const cs = getChapterState(chId);
+  if (!cs.scores[qi]) cs.scores[qi] = {};
+  cs.scores[qi][si] = score;
+  // Re-render quiz section only
+  const chapter = CHAPTERS.find(c => c.id === chId);
+  if (document.getElementById('screen-chapter').classList.contains('active')) {
+    // Update score buttons for this question
+    const stag = document.querySelectorAll(`.stag-score-block`);
+    // Re-render full quiz for simplicity
+    const container = document.getElementById('chapter-content');
+    const quizEl = container.querySelector('.quiz-section');
+    if (quizEl) {
+      const newQuizHtml = document.createElement('div');
+      newQuizHtml.innerHTML = renderQuiz(chapter);
+      quizEl.replaceWith(newQuizHtml.firstElementChild);
+    }
+  }
+}
+
+function setObsComment(chId, val) {
+  const cs = getChapterState(chId);
+  cs.obsComment = val;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RECONNAISSANCE VOCALE
+// ═══════════════════════════════════════════════════════════════════════════════
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let activeTextarea = null;
+let micBtn = null;
+let micTip = null;
+
+function initSpeech() {
+  micTip = document.createElement('div');
+  micTip.className = 'mic-tip';
+  micTip.textContent = '🎙 Parle maintenant… (tap pour arrêter)';
+  document.body.appendChild(micTip);
+
+  if (!SpeechRecognition) return; // pas supporté
+
+  recognition = new SpeechRecognition();
+  recognition.lang = 'fr-FR';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  let finalText = '';
+
+  recognition.onstart = () => {
+    if (micBtn) micBtn.classList.add('listening');
+    micTip.classList.add('visible');
+  };
+
+  recognition.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalText += e.results[i][0].transcript + ' ';
+      else interim = e.results[i][0].transcript;
+    }
+    if (activeTextarea) {
+      activeTextarea.value = (activeTextarea._baseText || '') + finalText + interim;
+      activeTextarea.dispatchEvent(new Event('change'));
+    }
+  };
+
+  recognition.onerror = (e) => {
+    let msg = '❌ Micro indisponible.';
+    if (e.error === 'not-allowed') msg = '❌ Accès au micro refusé. Autorise le micro dans les paramètres du navigateur.';
+    else if (e.error === 'network') msg = '❌ Connexion internet requise pour la reconnaissance vocale.';
+    else if (e.error === 'no-speech') msg = '⚠️ Aucune voix détectée.';
+    showSaveToast(msg);
+    stopListening();
+  };
+
+  recognition.onend = () => { stopListening(); };
+}
+
+function toggleMic(btn, textarea, chId, sIdx, pIdx) {
+  if (!recognition) {
+    showSaveToast('❌ Ton navigateur ne supporte pas la dictée. Utilise Chrome ou Edge.');
+    return;
+  }
+  if (btn.classList.contains('listening')) {
+    stopListening();
+  } else {
+    startListening(btn, textarea);
+  }
+}
+
+function startListening(btn, textarea) {
+  if (micBtn && micBtn !== btn) stopListening(); // arrête l'autre micro si actif
+  activeTextarea = textarea;
+  micBtn = btn;
+  textarea._baseText = textarea.value ? textarea.value.trimEnd() + ' ' : '';
+  recognition.start();
+}
+
+function stopListening() {
+  try { recognition && recognition.stop(); } catch(e) {}
+  if (micBtn) micBtn.classList.remove('listening');
+  if (micTip) micTip.classList.remove('visible');
+  if (activeTextarea) activeTextarea._baseText = undefined;
+  activeTextarea = null;
+  micBtn = null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SAUVEGARDE / CHARGEMENT
+// ═══════════════════════════════════════════════════════════════════════════════
+const STORAGE_KEY = 'dpn_haccp_session';
+
+function saveAll() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ session, state, savedAt: new Date().toISOString() }));
+    showSaveToast('💾 Sauvegardé automatiquement');
+  } catch(e) { console.warn('localStorage indisponible', e); }
+}
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data.session || !data.session.stagiaires) return false;
+    session = data.session;
+    state = data.state || {};
+    return true;
+  } catch(e) { return false; }
+}
+
+function exportSession() {
+  const data = JSON.stringify({ session, state, exportedAt: new Date().toISOString(), version: '1.0' }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const dateStr = session.date || new Date().toISOString().split('T')[0];
+  const enseigne = (session.enseigne || 'formation').replace(/[^a-zA-Z0-9]/g, '_');
+  a.download = `HACCP_${enseigne}_${dateStr}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showSaveToast('📥 Fichier téléchargé !');
+}
+
+function importSession(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.session || !data.state) { alert('Fichier invalide.'); return; }
+      session = data.session;
+      state = data.state;
+      saveAll();
+      showChapters();
+      showSaveToast('✅ Session chargée avec succès !');
+    } catch(err) { alert('Erreur lors du chargement du fichier.'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function exportToWord() {
+  const onsLabel = { oui: '✓ OUI', non: '✗ NON', so: '— S/O' };
+  const onsColor = { oui: '#15803d', non: '#b91c1c', so: '#c2410c' };
+  const levelColor = { acquis: '#15803d', 'en-cours': '#c2410c', 'non-acquis': '#b91c1c' };
+
+  let html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'>
+<head><meta charset='utf-8'><style>
+  @page { margin:2cm 2.5cm; size:A4; }
+  body { font-family:Arial,sans-serif; font-size:10pt; color:#1e293b; }
+  h1 { font-size:15pt; color:#1d4ed8; text-align:center; margin-bottom:4pt; }
+  h2 { font-size:12pt; color:#1d4ed8; border-bottom:1.5pt solid #1d4ed8; padding-bottom:3pt; margin-top:16pt; margin-bottom:6pt; }
+  h3 { font-size:9pt; color:#6b7280; text-transform:uppercase; letter-spacing:.5pt; margin:10pt 0 4pt; }
+  table { width:100%; border-collapse:collapse; margin-bottom:10pt; font-size:9pt; }
+  th { background:#dbeafe; color:#1e3a8a; font-weight:bold; padding:4pt 6pt; border:1pt solid #bfdbfe; text-align:left; }
+  td { padding:4pt 6pt; border:1pt solid #e5e7eb; vertical-align:top; }
+  .section-row td { background:#f1f5f9; font-weight:bold; font-size:8.5pt; text-transform:uppercase; color:#1d4ed8; padding:3pt 6pt; }
+  .quiz-block { background:#f8fafc; border:1pt solid #bfdbfe; padding:8pt; margin-top:8pt; }
+  .obs-box { margin-top:6pt; padding:5pt 8pt; background:#fffbeb; border-left:3pt solid #d97706; font-size:9pt; }
+  .page-break { page-break-before:always; }
+</style></head><body>`;
+
+  // ── PAGE DE GARDE ──
+  html += `<div style="text-align:center;padding:50pt 0 30pt">
+    <div style="font-size:32pt;font-weight:900;color:#1d4ed8;letter-spacing:2pt">DPN</div>
+    <h1>SUIVI DE FORMATION<br>HYGIÈNE ET SYSTÈME HACCP</h1>
+    <div style="font-size:8.5pt;color:#6b7280">Version 5.2 – 10/04/2026</div>
+  </div>
+  <table style="margin-bottom:20pt">
+    <tr><td style="background:#dbeafe;font-weight:bold;width:120pt;border:1pt solid #bfdbfe">Enseigne</td><td style="border:1pt solid #bfdbfe">${session.enseigne}</td></tr>
+    <tr><td style="background:#dbeafe;font-weight:bold;border:1pt solid #bfdbfe">Date de formation</td><td style="border:1pt solid #bfdbfe">${formatDate(session.date)}</td></tr>
+    <tr><td style="background:#dbeafe;font-weight:bold;border:1pt solid #bfdbfe">Formateur</td><td style="border:1pt solid #bfdbfe">${session.formateur}</td></tr>
+    <tr><td style="background:#dbeafe;font-weight:bold;border:1pt solid #bfdbfe">Stagiaires</td><td style="border:1pt solid #bfdbfe">${session.stagiaires.join(', ')}</td></tr>
+  </table>`;
+
+  // ── CHAPITRES ──
+  CHAPTERS.forEach((chapter, idx) => {
+    const cs = getChapterState(chapter.id);
+    html += `<div class="${idx > 0 ? 'page-break' : ''}"></div>`;
+    html += `<h2>${chapter.id}. ${chapter.title}</h2>`;
+    html += `<div style="font-size:9pt;margin-bottom:8pt"><strong>Objectif :</strong> ${chapter.objective}</div>`;
+
+    // Points d'observation
+    html += `<table>
+      <tr>
+        <th style="width:52%">Point à observer</th>
+        <th style="width:11%;text-align:center">Réponse</th>
+        <th style="width:37%">Commentaires / Actions correctives</th>
+      </tr>`;
+    chapter.sections.forEach((section, sIdx) => {
+      html += `<tr class="section-row"><td colspan="3">${section.title}</td></tr>`;
+      section.points.forEach((point, pIdx) => {
+        const key = getPointKey(sIdx, pIdx);
+        const val = cs.points[key] || {};
+        const v = val.v || '';
+        let pointText = point.text || point.title;
+        if (point.details) pointText += '<br><span style="font-size:8pt;color:#6b7280">' + point.details.map(d=>'• '+d).join('<br>') + '</span>';
+        html += `<tr>
+          <td>${pointText}</td>
+          <td style="text-align:center;font-weight:bold;color:${v ? onsColor[v] : '#9ca3af'}">${v ? onsLabel[v] : '—'}</td>
+          <td style="font-size:8.5pt;color:#374151">${val.comment || ''}</td>
+        </tr>`;
+      });
+    });
+    html += `</table>`;
+
+    // Quiz
+    if (chapter.quiz) {
+      const scores = quizScores(chapter);
+      html += `<div class="quiz-block">
+        <h3 style="margin-top:0;color:#1d4ed8">Quiz — ${chapter.quiz.title}</h3>
+        <table>
+          <tr>
+            <th style="width:40%">Question</th>
+            <th style="width:35%">✓ Bonne réponse</th>
+            ${session.stagiaires.map(s=>`<th style="text-align:center">${s.split(' ')[0]}</th>`).join('')}
+          </tr>`;
+      chapter.quiz.questions.forEach((q, qi) => {
+        html += `<tr>
+          <td style="font-size:8.5pt"><strong>${qi+1}.</strong> ${q.q}</td>
+          <td style="font-size:8pt;color:#15803d">${q.key}</td>
+          ${session.stagiaires.map((s, si) => {
+            const sc = (cs.scores[qi] || {})[si];
+            const c = sc === 2 ? '#15803d' : sc === 0 ? '#b91c1c' : '#9ca3af';
+            return `<td style="text-align:center;font-weight:bold;color:${c}">${sc !== undefined ? sc+'/2' : '—'}</td>`;
+          }).join('')}
+        </tr>`;
+      });
+      html += `<tr style="background:#f1f5f9">
+        <td colspan="2" style="font-weight:bold">Total du quiz /6</td>
+        ${scores.map(s => {
+          const level = scoreBadge(s.score, s.max);
+          return `<td style="text-align:center;font-weight:bold;color:${levelColor[level]}">${s.score}/6 — ${scoreBadgeLabel(level)}</td>`;
+        }).join('')}
+      </tr>`;
+      html += `</table></div>`;
+    }
+
+    if (cs.obsComment) {
+      html += `<div class="obs-box"><strong>Observations :</strong> ${cs.obsComment}</div>`;
+    }
+  });
+
+  // ── BILAN FINAL ──
+  let totalScores = session.stagiaires.map(() => ({ score: 0, max: 0 }));
+  CHAPTERS.forEach(ch => {
+    const sc = quizScores(ch);
+    if (sc) sc.forEach((s, si) => { totalScores[si].score += s.score; totalScores[si].max += s.max; });
+  });
+
+  html += `<div class="page-break"></div>
+  <h2 style="font-size:14pt">Bilan de formation</h2>
+  <table style="margin-bottom:8pt">
+    <tr><th style="width:110pt">Enseigne</th><td>${session.enseigne}</td><th style="width:110pt">Date</th><td>${formatDate(session.date)}</td></tr>
+    <tr><th>Formateur</th><td colspan="3">${session.formateur}</td></tr>
+  </table>
+
+  <h3>Résultats globaux des quiz</h3>
+  <table>
+    <tr><th>Stagiaire</th><th style="text-align:center">Score total</th><th style="text-align:center">Niveau global</th></tr>
+    ${session.stagiaires.map((name, si) => {
+      const t = totalScores[si];
+      const level = scoreBadge(t.score, t.max);
+      return `<tr><td><strong>${name}</strong></td>
+        <td style="text-align:center;font-weight:bold">${t.score}/${t.max}</td>
+        <td style="text-align:center;font-weight:bold;color:${levelColor[level]}">${scoreBadgeLabel(level)}</td>
+      </tr>`;
+    }).join('')}
+  </table>
+
+  <h3>Détail par chapitre</h3>
+  <table>
+    <tr>
+      <th>Chapitre</th>
+      <th style="text-align:center">Points observés</th>
+      ${session.stagiaires.map(s=>`<th style="text-align:center">Quiz ${s.split(' ')[0]}</th>`).join('')}
+    </tr>
+    ${CHAPTERS.map(ch => {
+      const prog = chapterProgress(ch);
+      const sc = quizScores(ch);
+      return `<tr>
+        <td>${ch.id}. ${ch.title}</td>
+        <td style="text-align:center">${prog.filled}/${prog.total}</td>
+        ${session.stagiaires.map((s, si) => {
+          if (!sc) return `<td style="text-align:center;color:#9ca3af">—</td>`;
+          const lvl = scoreBadge(sc[si].score, sc[si].max);
+          return `<td style="text-align:center;font-weight:bold;color:${levelColor[lvl]}">${sc[si].score}/6</td>`;
+        }).join('')}
+      </tr>`;
+    }).join('')}
+  </table>
+
+  <div style="margin-top:30pt;font-size:8pt;color:#9ca3af;text-align:right">
+    Document généré le ${new Date().toLocaleDateString('fr-FR')} – Application DPN Formation HACCP
+  </div></body></html>`;
+
+  const blob = new Blob(['﻿' + html], { type: 'application/msword;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const dateStr = (session.date || new Date().toISOString().split('T')[0]);
+  const enseigne = (session.enseigne || 'formation').replace(/[^a-zA-Z0-9]/g, '_');
+  a.download = `HACCP_${enseigne}_${dateStr}.doc`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showSaveToast('📄 Document Word téléchargé !');
+}
+
+function clearSession() {
+  if (!confirm('Effacer la session en cours et repartir de zéro ?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  session = { enseigne: '', date: '', formateur: '', stagiaires: [] };
+  state = {};
+  document.getElementById('date-formation').value = new Date().toISOString().split('T')[0];
+  updateStagiairesFields();
+  showScreen('session');
+}
+
+// Toast notification
+let toastTimer = null;
+function showSaveToast(msg) {
+  let toast = document.getElementById('save-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'save-toast';
+    toast.style.cssText = 'position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:.5rem 1rem;border-radius:20px;font-size:.8rem;font-weight:600;z-index:9999;transition:opacity .3s;pointer-events:none;white-space:nowrap';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+}
+
+// Auto-save on every state change — wrap key setters
+const _origSetONS = setONS;
+window.setONS = function(...args) { _origSetONS(...args); saveAll(); };
+const _origSetScore = setScore;
+window.setScore = function(...args) { _origSetScore(...args); saveAll(); };
+const _origSetComment = setComment;
+window.setComment = function(...args) { _origSetComment(...args); saveAll(); };
+const _origSetObsComment = setObsComment;
+window.setObsComment = function(...args) { _origSetObsComment(...args); saveAll(); };
+const _origStartSession = startSession;
+window.startSession = function() { _origStartSession(); saveAll(); };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════════
+// Enregistrement du Service Worker (PWA)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('[PWA] Service Worker enregistré'))
+      .catch(err => console.warn('[PWA] Erreur SW :', err));
+  });
+}
+
+// Set today's date as default
+document.getElementById('date-formation').value = new Date().toISOString().split('T')[0];
+updateStagiairesFields();
+initSpeech();
+
+// Try to restore previous session
+if (loadFromStorage() && session.stagiaires.length > 0) {
+  const savedDate = session.date ? ` du ${formatDate(session.date)}` : '';
+  const resume = confirm(`📋 Session trouvée !\n\nEnseigne : ${session.enseigne}${savedDate}\nFormateur : ${session.formateur}\nStagiaires : ${session.stagiaires.join(', ')}\n\n→ Reprendre cette session ?`);
+  if (resume) {
+    showChapters();
+  } else {
+    session = { enseigne: '', date: '', formateur: '', stagiaires: [] };
+    state = {};
+    document.getElementById('date-formation').value = new Date().toISOString().split('T')[0];
+    updateStagiairesFields();
+  }
+}
+</script>
+</body>
+</html>
