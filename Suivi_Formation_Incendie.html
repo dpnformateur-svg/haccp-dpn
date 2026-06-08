@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suivi Formation Sécurité Incendie – DPN</title>
+<link rel="manifest" href="manifest_incendie.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Incendie DPN">
+<meta name="theme-color" content="#b91c1c">
+<link rel="apple-touch-icon" href="icons/icon-fire-192.png">
+<style>
+:root {
+  --blue: #1d4ed8; --blue-light: #dbeafe; --blue-mid: #2563eb;
+  --green: #15803d; --green-light: #dcfce7; --green-btn: #16a34a;
+  --red: #b91c1c; --red-light: #fee2e2; --red-btn: #dc2626;
+  --orange: #c2410c; --orange-light: #ffedd5; --orange-btn: #ea580c;
+  --fire: #b91c1c; --fire-light: #fff1f2; --fire-mid: #dc2626;
+  --gray: #6b7280; --gray-light: #f3f4f6; --border: #e5e7eb;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fef2f2; color: #1e293b; min-height: 100vh; }
+
+#screen-session, #screen-chapters, #screen-chapter, #screen-summary { display: none; }
+#screen-session.active, #screen-chapters.active, #screen-chapter.active, #screen-summary.active { display: block; }
+
+.topbar {
+  background: var(--fire); color: #fff; padding: .75rem 1rem;
+  display: flex; align-items: center; gap: .75rem; position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 8px #0003;
+}
+.topbar .back-btn { background: #ffffff30; border: none; color: #fff; border-radius: 6px; padding: .3rem .6rem; cursor: pointer; font-size: .85rem; }
+.topbar h1 { flex: 1; font-size: .95rem; }
+.topbar .logo { font-size: 1.3rem; font-weight: 800; background: #fff; color: var(--fire); border-radius: 6px; padding: .15rem .5rem; }
+
+.container { max-width: 720px; margin: 0 auto; padding: 1rem; }
+
+.session-card { background: #fff; border-radius: 14px; padding: 1.5rem; box-shadow: 0 2px 12px #0001; margin-bottom: 1rem; }
+.session-card .logo-big { text-align: center; margin-bottom: 1rem; }
+.session-card .logo-big span { font-size: 2rem; font-weight: 900; color: var(--fire); }
+.session-card .logo-big .icon { font-size: 2.5rem; }
+.session-card h2 { text-align: center; margin-bottom: .3rem; font-size: 1.05rem; }
+.session-card .subtitle { text-align: center; color: var(--gray); font-size: .8rem; margin-bottom: 1.5rem; }
+label { display: block; font-size: .82rem; font-weight: 600; color: #374151; margin-bottom: .25rem; margin-top: .75rem; }
+input[type=text], input[type=date], textarea, select {
+  width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: .55rem .7rem;
+  font-size: .9rem; font-family: inherit; color: #1e293b; background: #fff; transition: border-color .15s;
+}
+input:focus, textarea:focus { outline: none; border-color: var(--fire-mid); }
+.stagiaires-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.btn-primary { display: block; width: 100%; background: var(--fire-mid); color: #fff; border: none; border-radius: 10px; padding: .85rem; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 1.25rem; transition: background .15s; }
+.btn-primary:hover { background: var(--fire); }
+.btn-secondary { background: var(--gray-light); color: #374151; border: 1.5px solid var(--border); border-radius: 10px; padding: .7rem; font-size: .9rem; font-weight: 600; cursor: pointer; transition: background .15s; }
+.btn-secondary:hover { background: var(--border); }
+
+.session-banner { background: #fff1f2; border-radius: 12px; padding: .9rem 1rem; margin-bottom: 1rem; border: 1px solid #fecaca; }
+.session-banner .info { font-size: .82rem; color: #7f1d1d; }
+.session-banner .info strong { display: inline-block; min-width: 90px; }
+.progress-bar { background: var(--border); border-radius: 99px; height: 6px; margin-top: .5rem; overflow: hidden; }
+.progress-fill { background: var(--fire-mid); height: 100%; border-radius: 99px; transition: width .3s; }
+
+.chapter-list { display: flex; flex-direction: column; gap: .5rem; }
+.chapter-item { background: #fff; border-radius: 12px; padding: 1rem; cursor: pointer; border: 2px solid var(--border); display: flex; align-items: center; gap: .8rem; transition: border-color .15s, box-shadow .15s; }
+.chapter-item:hover { border-color: var(--fire-mid); box-shadow: 0 2px 8px #dc262620; }
+.chapter-item.done { border-color: var(--green-btn); background: var(--green-light); }
+.chapter-item.partial { border-color: var(--orange-btn); }
+.chapter-num { width: 36px; height: 36px; border-radius: 50%; background: #fff1f2; color: var(--fire); font-weight: 800; font-size: .85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.chapter-item.done .chapter-num { background: var(--green-btn); color: #fff; }
+.chapter-info { flex: 1; }
+.chapter-info h2 { font-size: .9rem; }
+.chapter-info .quiz-score { font-size: .75rem; color: var(--gray); margin-top: .15rem; }
+.chapter-status { font-size: 1.2rem; }
+
+.summary-btn { background: #fff; border: 2px solid var(--fire-mid); border-radius: 12px; padding: 1rem; cursor: pointer; text-align: center; font-weight: 700; color: var(--fire-mid); font-size: .95rem; margin-top: .5rem; width: 100%; transition: background .15s; }
+.summary-btn:hover { background: var(--fire-light); }
+
+.chapter-header { background: #fff; border-radius: 12px; padding: 1rem; margin-bottom: .75rem; border-left: 4px solid var(--fire-mid); }
+.chapter-header .obj { font-size: .82rem; color: #374151; margin-top: .3rem; }
+.chapter-header .obj strong { color: var(--fire); }
+
+.section-block { background: #fff; border-radius: 12px; padding: 1rem; margin-bottom: .75rem; }
+.section-title { font-size: .8rem; font-weight: 700; text-transform: uppercase; color: var(--fire); letter-spacing: .05em; margin-bottom: .75rem; padding-bottom: .5rem; border-bottom: 1px solid var(--border); }
+
+.point-item { margin-bottom: .9rem; padding-bottom: .9rem; border-bottom: 1px solid #f1f5f9; }
+.point-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.point-question { font-size: .88rem; font-weight: 600; margin-bottom: .3rem; }
+.point-details { font-size: .78rem; color: var(--gray); margin-bottom: .5rem; padding-left: .8rem; }
+.point-details li { margin-bottom: .15rem; }
+
+.ons-buttons { display: flex; gap: .4rem; margin-bottom: .5rem; }
+.ons-btn { flex: 1; padding: .45rem; border: 2px solid var(--border); border-radius: 8px; font-weight: 700; font-size: .8rem; cursor: pointer; background: #fff; transition: all .15s; text-align: center; }
+.ons-btn.oui.active { background: var(--green-light); border-color: var(--green-btn); color: var(--green); }
+.ons-btn.non.active { background: var(--red-light); border-color: var(--red-btn); color: var(--red); }
+.ons-btn.so.active { background: var(--orange-light); border-color: var(--orange-btn); color: var(--orange); }
+
+.comment-wrapper { position: relative; }
+.point-comment { width: 100%; font-size: .8rem; border: 1.5px solid var(--border); border-radius: 6px; padding: .4rem .55rem; font-family: inherit; resize: vertical; min-height: 44px; }
+.point-comment:focus { outline: none; border-color: var(--fire-mid); }
+.mic-btn { position: absolute; right: .35rem; bottom: .35rem; width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer; font-size: .95rem; display: flex; align-items: center; justify-content: center; background: var(--gray-light); color: var(--gray); transition: all .15s; z-index: 2; box-shadow: 0 1px 4px #0002; }
+.mic-btn:hover { background: #fff1f2; color: var(--fire-mid); }
+.mic-btn.listening { background: var(--red-btn); color: #fff; animation: pulse-mic .8s infinite; }
+.mic-btn.no-support { opacity: .35; cursor: not-allowed; }
+@keyframes pulse-mic { 0%,100%{box-shadow:0 0 0 0 #dc262640} 50%{box-shadow:0 0 0 7px #dc262600} }
+.mic-tip { position: fixed; bottom: 4.5rem; left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; padding: .5rem 1rem; border-radius: 20px; font-size: .8rem; font-weight: 600; z-index: 9999; pointer-events: none; display: none; white-space: nowrap; }
+.mic-tip.visible { display: block; }
+
+.quiz-section { background: #fff; border-radius: 12px; padding: 1rem; margin-bottom: .75rem; border: 2px solid #fecaca; }
+.quiz-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.quiz-badge { background: var(--fire-mid); color: #fff; border-radius: 6px; padding: .25rem .6rem; font-size: .75rem; font-weight: 700; }
+
+.quiz-question { margin-bottom: 1rem; padding: .75rem; background: var(--gray-light); border-radius: 10px; }
+.quiz-q-num { font-size: .72rem; font-weight: 700; color: var(--fire); text-transform: uppercase; margin-bottom: .3rem; }
+.quiz-q-text { font-size: .88rem; font-weight: 600; margin-bottom: .6rem; }
+.quiz-choices { display: flex; flex-direction: column; gap: .35rem; margin-bottom: .6rem; }
+.quiz-choice { display: flex; align-items: center; gap: .5rem; padding: .45rem .6rem; border-radius: 7px; border: 1.5px solid var(--border); background: #fff; font-size: .82rem; }
+.quiz-choice.correct-highlight { background: var(--green-light); border-color: var(--green-btn); }
+
+.stagiaire-scores { display: flex; gap: .4rem; flex-wrap: wrap; }
+.stag-score-block { flex: 1; min-width: 80px; }
+.stag-score-label { font-size: .7rem; color: var(--gray); font-weight: 600; margin-bottom: .2rem; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.score-btns { display: flex; gap: .25rem; }
+.score-btn { flex: 1; padding: .4rem; border-radius: 6px; border: 2px solid var(--border); font-weight: 700; font-size: .8rem; cursor: pointer; background: #fff; text-align: center; transition: all .1s; }
+.score-btn.active-0 { background: var(--red-light); border-color: var(--red-btn); color: var(--red); }
+.score-btn.active-2 { background: var(--green-light); border-color: var(--green-btn); color: var(--green); }
+
+.quiz-chapter-total { display: flex; justify-content: flex-end; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; padding-top: .5rem; border-top: 1px solid var(--border); }
+.stag-total-chip { font-size: .78rem; font-weight: 700; padding: .25rem .6rem; border-radius: 20px; background: var(--gray-light); border: 1px solid var(--border); }
+.stag-total-chip.acquis { background: var(--green-light); border-color: var(--green-btn); color: var(--green); }
+.stag-total-chip.en-cours { background: var(--orange-light); border-color: var(--orange-btn); color: var(--orange); }
+.stag-total-chip.non-acquis { background: var(--red-light); border-color: var(--red-btn); color: var(--red); }
+
+.obs-section { background: #fff; border-radius: 12px; padding: 1rem; margin-bottom: .75rem; }
+.chapter-nav { display: flex; gap: .5rem; margin-top: .75rem; }
+.chapter-nav button { flex: 1; }
+
+.summary-card { background: #fff; border-radius: 12px; padding: 1rem; margin-bottom: .75rem; }
+.summary-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+.summary-table th { background: #fff1f2; color: var(--fire); text-align: left; padding: .5rem .6rem; font-size: .72rem; }
+.summary-table td { padding: .45rem .6rem; border-bottom: 1px solid var(--border); }
+.summary-table tr:last-child td { border-bottom: none; }
+.badge { display: inline-block; border-radius: 20px; padding: .15rem .5rem; font-size: .7rem; font-weight: 700; }
+.badge.acquis { background: var(--green-light); color: var(--green); }
+.badge.en-cours { background: var(--orange-light); color: var(--orange); }
+.badge.non-acquis { background: var(--red-light); color: var(--red); }
+
+/* Glossaire */
+.glossaire-table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+.glossaire-table th { background: #fff1f2; color: var(--fire); padding: .4rem .6rem; text-align: left; border: 1px solid #fecaca; }
+.glossaire-table td { padding: .4rem .6rem; border: 1px solid var(--border); vertical-align: top; }
+.glossaire-table tr:nth-child(even) td { background: #f9fafb; }
+
+@media print {
+  .topbar, .btn-primary, .btn-secondary, .chapter-nav, .score-btns, .summary-btn, .back-btn, .mic-btn { display: none !important; }
+  body { background: #fff; }
+  .container { padding: 0; max-width: 100%; }
+}
+@media (max-width: 400px) {
+  .stagiaires-grid { grid-template-columns: 1fr; }
+  .stag-score-block { min-width: 60px; }
+}
+</style>
+</head>
+<body>
+
+<!-- SESSION -->
+<div id="screen-session" class="active">
+  <div class="container" style="padding-top:1.5rem;padding-bottom:2rem">
+    <div class="session-card">
+      <div class="logo-big"><span>DPN</span> <span class="icon">🔥</span></div>
+      <h2>Suivi de Formation</h2>
+      <p class="subtitle">Sécurité Incendie au Travail — V1.2</p>
+      <label>Nom de l'enseigne</label>
+      <input type="text" id="enseigne" placeholder="Ex : Boulangerie Martin">
+      <label>Date de formation</label>
+      <input type="date" id="date-formation">
+      <label>Nom du formateur</label>
+      <input type="text" id="formateur" placeholder="Prénom NOM">
+      <label>Nombre de stagiaires</label>
+      <select id="nb-stagiaires" onchange="updateStagiairesFields()">
+        <option value="1">1 stagiaire</option>
+        <option value="2" selected>2 stagiaires</option>
+        <option value="3">3 stagiaires</option>
+        <option value="4">4 stagiaires</option>
+      </select>
+      <div id="stagiaires-fields" class="stagiaires-grid" style="margin-top:.5rem"></div>
+      <button class="btn-primary" onclick="startSession()">Démarrer la formation →</button>
+      <div style="text-align:center;margin-top:.75rem">
+        <label style="display:inline-block;cursor:pointer;color:var(--fire-mid);font-size:.82rem;font-weight:600;text-decoration:underline">
+          📂 Reprendre une session sauvegardée (.json)
+          <input type="file" accept=".json" style="display:none" onchange="importSession(event)">
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHAPTER LIST -->
+<div id="screen-chapters">
+  <div class="topbar">
+    <span class="logo">DPN</span>
+    <h1>🔥 Formation Incendie</h1>
+    <button class="back-btn" onclick="exportToWord()" title="Exporter en Word" style="background:#15803d90">📄</button>
+    <button class="back-btn" onclick="exportSession()" title="Sauvegarde JSON">📥</button>
+  </div>
+  <div class="container">
+    <div class="session-banner" id="session-banner"></div>
+    <div class="chapter-list" id="chapter-list"></div>
+    <button class="summary-btn" onclick="showSummary()">📊 Voir le bilan de formation</button>
+  </div>
+</div>
+
+<!-- CHAPTER DETAIL -->
+<div id="screen-chapter">
+  <div class="topbar">
+    <button class="back-btn" onclick="showChapters()">← Retour</button>
+    <h1 id="chapter-topbar-title">Chapitre</h1>
+  </div>
+  <div class="container" id="chapter-content"></div>
+</div>
+
+<!-- SUMMARY -->
+<div id="screen-summary">
+  <div class="topbar">
+    <button class="back-btn" onclick="showChapters()">← Retour</button>
+    <h1>Bilan de formation</h1>
+  </div>
+  <div class="container" id="summary-content"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DONNÉES
+// ═══════════════════════════════════════════════════════
+const CHAPTERS = [
+  {
+    id: 1, title: "La Réglementation",
+    objective: "Connaître les obligations légales en matière de sécurité incendie.",
+    sections: [
+      { title: "1.1 — OBLIGATIONS LÉGALES", points: [
+        { text: "Connaissez-vous les obligations légales en sécurité incendie ?", details: ["Code du travail, normes ERP, IGH et APSAD"] },
+        { text: "L'entreprise dispose-t-elle des documents obligatoires ?", details: ["DUERP, consignes de sécurité, affichages réglementaires"] },
+        { text: "Savez-vous à qui revient la responsabilité de la mise en œuvre des mesures de sécurité incendie ?" },
+        { text: "Quels sont les risques encourus en cas de non-respect des obligations ?", details: ["Sanctions pénales, administratives, risque pour la sécurité des personnes"] },
+        { text: "Les employés sont-ils formés à la sécurité incendie et à l'utilisation des extincteurs ?" }
+      ]},
+      { title: "1.2 — STATISTIQUES INCENDIE EN FRANCE", points: [
+        { text: "Savez-vous combien d'incendies ont lieu chaque année en entreprise ?", details: ["Environ 15 000 incendies déclarés chaque année en France"] },
+        { text: "Connaissez-vous les principales causes d'incendie en entreprise ?", details: ["Origine électrique, négligence humaine, stockage inadapté"] },
+        { text: "Savez-vous quelles sont les conséquences économiques d'un incendie ?", details: ["Fermeture temporaire, pertes financières, impact sur l'emploi"] },
+        { text: "Combien de temps faut-il en moyenne aux pompiers pour intervenir ?", details: ["Environ 10 minutes, variable selon la localisation"] },
+        { text: "Quelles entreprises sont les plus exposées au risque incendie ?", details: ["Entreprises avec risques chimiques, électriques ou de stockage de matières inflammables"] }
+      ]},
+      { title: "1.3 — RÉGLEMENTATION INCENDIE DES ERP", points: [
+        { text: "Connaissez-vous la classification des ERP et les obligations associées ?", details: ["ERP classés par type et effectif (ex: M pour commerces, N pour restaurants)"] },
+        { text: "Savez-vous quelles sont les obligations de l'exploitant en matière de sécurité incendie ?", details: ["Mise en conformité du bâtiment, formation du personnel, affichage des consignes"] },
+        { text: "L'établissement dispose-t-il des moyens d'alarme et de désenfumage conformes ?", details: ["SSI (Système de Sécurité Incendie) adapté à la catégorie de l'ERP"] }
+      ]},
+      { title: "1.4 — RÉGLEMENTATION AFFICHAGE DES PLANS", points: [
+        { text: "Connaissez-vous la différence entre un Plan d'intervention et un Plan d'évacuation ?", details: ["Plan évacuation = guider occupants vers sorties", "Plan intervention = aide aux secours pour localiser risques et commandes"] },
+        { text: "Les mentions obligatoires du plan d'évacuation sont-elles présentes ?", details: ["« Vous êtes ici », cheminements et issues de secours, emplacement des moyens d'alarme, point de rassemblement"] },
+        { text: "Les mentions obligatoires du plan d'intervention sont-elles présentes ?", details: ["Niveaux, locaux à risques/techniques, dispositifs de sécurité, organes de coupure (gaz, électricité)"] }
+      ]}
+    ],
+    quiz: { title: "La Réglementation", questions: [
+      { q: "Quel document est obligatoire pour l'évaluation des risques incendie ?", choices: ["Registre des employés", "DUERP (Document Unique d'Évaluation des Risques Professionnels)", "Liste des équipements"], correct: [1], key: "DUERP" },
+      { q: "Qui est responsable de la sécurité incendie dans une entreprise ?", choices: ["Uniquement les pompiers", "L'employeur", "Chaque salarié individuellement"], correct: [1], key: "L'employeur" },
+      { q: "À quelle fréquence les exercices d'évacuation doivent-ils être réalisés ?", choices: ["Une fois par mois", "Une fois par an", "Tous les cinq ans"], correct: [1], key: "Une fois par an" }
+    ]}
+  },
+  {
+    id: 2, title: "Statistiques sur les Incendies",
+    objective: "Comprendre l'ampleur du risque incendie en entreprise.",
+    sections: [
+      { title: "CHIFFRES CLÉS", points: [
+        { text: "Avez-vous connaissance des statistiques nationales sur les incendies en entreprise ?" },
+        { text: "Connaissez-vous les secteurs d'activité les plus touchés ?" },
+        { text: "Savez-vous évaluer l'impact d'un incendie sur la continuité d'activité de votre établissement ?" }
+      ]}
+    ],
+    quiz: { title: "Statistiques incendies en France", questions: [
+      { q: "Quelle est la principale cause des incendies en entreprise ?", choices: ["Équipements électriques défectueux", "La foudre", "Actes criminels"], correct: [0], key: "Équipements électriques défectueux" },
+      { q: "Quel est le temps moyen d'intervention des pompiers en France ?", choices: ["2 minutes", "Entre 5 et 15 minutes", "30 minutes"], correct: [1], key: "Entre 5 et 15 minutes" },
+      { q: "Quelle est une des principales conséquences économiques d'un incendie en entreprise ?", choices: ["Une simple amende", "L'arrêt d'activité et des pertes financières", "Aucune conséquence"], correct: [1], key: "L'arrêt d'activité et des pertes financières" }
+    ]}
+  },
+  {
+    id: 3, title: "Réglementation ERP & Plans",
+    objective: "Maîtriser la réglementation des ERP et l'affichage des plans de sécurité.",
+    sections: [
+      { title: "RÉGLEMENTATION ERP", points: [
+        { text: "L'établissement est-il correctement classé en ERP ?", details: ["Type M = commerces, N = restaurants, etc."] },
+        { text: "Le SSI (Système de Sécurité Incendie) est-il adapté à la catégorie de l'ERP ?" },
+        { text: "Les obligations d'affichage sont-elles respectées ?" }
+      ]},
+      { title: "PLANS D'ÉVACUATION ET D'INTERVENTION", points: [
+        { text: "Le plan d'évacuation est-il affiché et à jour ?", details: ["« Vous êtes ici », issues de secours, point de rassemblement"] },
+        { text: "Le plan d'intervention est-il disponible pour les secours ?", details: ["Locaux à risques, commandes de sécurité, organes de coupure"] },
+        { text: "Le personnel connaît-il les plans et les issues de secours ?" }
+      ]}
+    ],
+    quiz: { title: "Réglementation ERP & Plans", questions: [
+      { q: "Quel est l'objectif principal du plan d'intervention ?", choices: ["Guider les occupants vers les sorties", "Aider les secours à localiser les risques, commandes et coupures", "Indiquer l'emplacement des toilettes"], correct: [1], key: "Aider les secours à localiser risques, commandes et coupures" },
+      { q: "Qui est responsable de la mise en œuvre des mesures de sécurité incendie dans un ERP ?", choices: ["Les pompiers", "L'exploitant de l'établissement", "Les clients"], correct: [1], key: "L'exploitant de l'établissement" },
+      { q: "Quelle est l'une des obligations pour les ERP en matière de formation du personnel ?", choices: ["Former régulièrement le personnel à la sécurité incendie", "Attendre une inspection des pompiers", "Déléguer la sécurité aux clients"], correct: [0], key: "Former régulièrement le personnel à la sécurité incendie" }
+    ]}
+  },
+  {
+    id: 4, title: "Le Triangle du Feu",
+    objective: "Comprendre les mécanismes de la combustion et savoir l'interrompre.",
+    sections: [
+      { title: "LES 3 ÉLÉMENTS DU FEU", points: [
+        { text: "Pouvez-vous citer les trois éléments du triangle du feu ?", details: ["Combustible + Comburant (oxygène) + Énergie d'activation"] },
+        { text: "Savez-vous comment empêcher un feu de se propager en supprimant un de ces éléments ?", details: ["Supprimer l'oxygène (couvrir), refroidir (eau), enlever le combustible"] },
+        { text: "Savez-vous pourquoi certains matériaux sont plus inflammables que d'autres ?", details: ["La structure chimique et la surface d'exposition influencent l'inflammabilité"] },
+        { text: "Connaissez-vous des exemples de combustibles présents en entreprise ?", details: ["Bois, papier, textiles, hydrocarbures, gaz inflammables"] }
+      ]}
+    ],
+    quiz: { title: "Le Triangle du Feu", questions: [
+      { q: "Quel est un des moyens d'éteindre un incendie ?", choices: ["Ajouter plus de comburant", "Supprimer l'énergie d'activation", "Ouvrir les fenêtres"], correct: [1], key: "Supprimer l'énergie d'activation (ou le comburant, ou le combustible)" },
+      { q: "Que se passe-t-il si on supprime le comburant du feu ?", choices: ["Le feu continue", "Le feu s'éteint", "Le feu double d'intensité"], correct: [1], key: "Le feu s'éteint" },
+      { q: "Pourquoi un feu peut-il continuer à brûler même après extinction apparente ?", choices: ["Des braises persistent et peuvent se réenflammer", "Le feu s'éteint toujours complètement", "Le feu double d'intensité après"], correct: [0], key: "Des braises persistent et peuvent se réenflammer" }
+    ]}
+  },
+  {
+    id: 5, title: "Propagation et Classes de Feux",
+    objective: "Connaître les modes de propagation du feu et identifier les classes de feux.",
+    sections: [
+      { title: "PROPAGATION DU FEU", points: [
+        { text: "Connaissez-vous les modes de propagation du feu ?", details: ["Conduction (matériaux), convection (air chaud), rayonnement (chaleur)"] },
+        { text: "Connaissez-vous des exemples concrets de propagation dans un environnement professionnel ?", details: ["Court-circuit au TGBT, feu de friteuse, incendie de stock de palettes"] },
+        { text: "Savez-vous quelles sont les mesures pour ralentir la propagation du feu ?", details: ["Portes coupe-feu, cloisonnement, désenfumage, ventilation contrôlée"] }
+      ]},
+      { title: "LES CLASSES DE FEUX", points: [
+        { text: "Savez-vous identifier la classe de feu en fonction du type de combustible ?", details: ["Classe A = solides (bois, papier)", "Classe B = liquides inflammables", "Classe C = gaz", "Classe D = métaux", "Classe F = huiles/graisses de cuisine"] },
+        { text: "Connaissez-vous les risques liés à l'utilisation d'un extincteur inadapté ?", details: ["Eau sur feu B ou F = aggravation de l'incendie"] },
+        { text: "Savez-vous pourquoi l'eau ne doit jamais être utilisée sur un feu de classe C ou D ?" }
+      ]}
+    ],
+    quiz: { title: "Propagation & Classes de Feux", questions: [
+      { q: "Quel est le mode de propagation du feu dans une pièce mal ventilée ?", choices: ["Conduction", "Convection", "Absorption thermique"], correct: [1], key: "Convection (air chaud)" },
+      { q: "À quoi sert une porte coupe-feu ?", choices: ["Évacuer plus rapidement", "Ralentir la propagation d'un incendie", "Retenir les clients"], correct: [1], key: "Ralentir la propagation d'un incendie" },
+      { q: "Quel mode de propagation est responsable de la diffusion de la chaleur à travers les objets solides ?", choices: ["La convection", "La conduction", "Le rayonnement"], correct: [1], key: "La conduction" }
+    ]}
+  },
+  {
+    id: 6, title: "Classes de Feux & Extincteurs",
+    objective: "Utiliser le bon moyen d'extinction selon la classe de feu.",
+    sections: [
+      { title: "ADÉQUATION FEU / EXTINCTEUR", points: [
+        { text: "Savez-vous identifier la classe de feu pour choisir le bon extincteur ?", details: ["Classe A → eau ou mousse", "Classe B → mousse ou CO₂", "Classe C → poudre", "Classe D → poudre spéciale", "Feux électriques → CO₂", "Classe F → extincteur spécial + couverture anti-feu"] },
+        { text: "Les extincteurs de l'établissement sont-ils adaptés aux risques présents ?" },
+        { text: "Les extincteurs sont-ils accessibles, signalés et vérifiés annuellement ?" }
+      ]}
+    ],
+    quiz: { title: "Classes de Feux", questions: [
+      { q: "Quelle classe de feu concerne les matériaux solides comme le bois, le papier ou le textile ?", choices: ["Classe A", "Classe B", "Classe C"], correct: [0], key: "Classe A" },
+      { q: "Quel type d'extincteur est le plus adapté pour un feu de classe B (liquides inflammables) ?", choices: ["Eau", "Mousse", "Poudre D"], correct: [1], key: "Mousse" },
+      { q: "Quel est le meilleur moyen d'éteindre un feu de cuisine (classe F — huiles et graisses) ?", choices: ["Jeter un seau d'eau dessus", "Utiliser un extincteur spécial classe F et couverture anti-feu", "Ouvrir les fenêtres pour évacuer la fumée"], correct: [1], key: "Extincteur classe F + couverture anti-feu" }
+    ]}
+  },
+  {
+    id: 7, title: "Atelier Pratique — Manipulation des Extincteurs",
+    objective: "Apprendre à utiliser correctement un extincteur selon le type de feu.",
+    sections: [
+      { title: "MANIPULATION DES EXTINCTEURS", points: [
+        { text: "Savez-vous utiliser un extincteur ?", details: ["Dégoupiller → viser la base des flammes → presser la poignée → balayer latéralement"] },
+        { text: "Connaissez-vous les types d'extincteurs et leurs utilisations ?", details: ["Eau pour solides, CO₂ pour feux électriques, mousse pour feux B, poudre pour multi-feux"] },
+        { text: "Savez-vous combien de temps un extincteur portable fonctionne ?", details: ["Environ 10 à 20 secondes maximum selon le modèle"] },
+        { text: "Les extincteurs sont-ils vérifiés annuellement et accessibles ?" },
+        { text: "Le personnel sait-il identifier et signaler un extincteur vide ou endommagé ?" }
+      ]}
+    ],
+    quiz: { title: "Atelier Pratique — Extincteurs", questions: [
+      { q: "Quel type d'extincteur utiliser sur un feu électrique ?", choices: ["Eau", "CO₂", "Poudre"], correct: [1], key: "CO₂" },
+      { q: "Où faut-il viser lorsqu'on utilise un extincteur ?", choices: ["Le haut des flammes", "La base des flammes", "Le sol autour du feu"], correct: [1], key: "La base des flammes" },
+      { q: "Pourquoi est-il important de tester l'extincteur avant utilisation ?", choices: ["Pour voir s'il fonctionne correctement", "Pour refroidir la poignée", "Pour libérer de la pression inutilement"], correct: [0], key: "Pour vérifier qu'il fonctionne correctement" }
+    ]}
+  },
+  {
+    id: 8, title: "Évacuation et Gestion des Flux",
+    objective: "Former les salariés aux bonnes pratiques en cas d'évacuation.",
+    sections: [
+      { title: "PRINCIPES DE L'ÉVACUATION", points: [
+        { text: "Savez-vous comment se déroule une évacuation ?", details: ["Suivre le chemin défini, évacuer calmement, ne pas utiliser les ascenseurs"] },
+        { text: "Savez-vous pourquoi il est interdit d'utiliser un ascenseur en cas d'incendie ?", details: ["Risque de panne et d'enfermement"] },
+        { text: "Avez-vous connaissance de la zone de refuge pour les PSH (Personnes en Situation de Handicap) ?", details: ["Les zones de refuge permettent aux PMR d'attendre l'évacuation sécurisée"] }
+      ]},
+      { title: "MATÉRIELS FACILITANT L'ÉVACUATION", points: [
+        { text: "L'entreprise dispose-t-elle d'une signalétique claire et visible ?", details: ["Une bonne signalisation oriente les personnes en cas d'urgence"] },
+        { text: "Les issues de secours sont-elles équipées de barres anti-panique ?", details: ["Les barres anti-panique permettent une ouverture rapide des portes de secours"] },
+        { text: "L'entreprise dispose-t-elle de fauteuils d'évacuation pour les PMR ?" }
+      ]},
+      { title: "ZONES DE RASSEMBLEMENT ET RÔLE DU RESPONSABLE", points: [
+        { text: "L'entreprise a-t-elle défini un point de rassemblement connu de tous ?" },
+        { text: "Le responsable d'évacuation sait-il organiser le comptage des évacués ?" },
+        { text: "Savez-vous comment communiquer efficacement avec les pompiers ?", details: ["Fournir des informations claires sur la situation et les personnes évacuées"] }
+      ]}
+    ],
+    quiz: { title: "Évacuation et Gestion des Flux", questions: [
+      { q: "Où faut-il se rendre après avoir évacué un bâtiment ?", choices: ["À la maison", "Au point de rassemblement", "Devant l'entrée principale"], correct: [1], key: "Au point de rassemblement" },
+      { q: "Pourquoi la signalétique de sécurité est-elle importante ?", choices: ["Pour le design du bâtiment", "Pour faciliter l'évacuation et guider les occupants", "Parce qu'elle est obligatoire"], correct: [1], key: "Pour faciliter l'évacuation et guider les occupants" },
+      { q: "Qui est chargé de communiquer avec les pompiers ?", choices: ["Chaque salarié", "Le responsable d'évacuation", "Le premier arrivé au point de rassemblement"], correct: [1], key: "Le responsable d'évacuation" }
+    ]}
+  },
+  {
+    id: 9, title: "Exercice d'Évacuation",
+    objective: "Tester en conditions réelles l'application des consignes d'évacuation.",
+    sections: [
+      { title: "ÉTAPES DE L'EXERCICE", points: [
+        { text: "Déclenchement de l'alarme — l'alarme incendie est-elle fonctionnelle et audible dans tout l'établissement ?" },
+        { text: "Suivi du chemin d'évacuation — les salariés empruntent-ils les voies désignées ?" },
+        { text: "Contrôle du respect des consignes — comportement des participants et chronométrage de l'exercice" },
+        { text: "Temps d'évacuation total : conforme aux exigences (< 3 min pour un ERP) ?" },
+        { text: "Bilan post-exercice réalisé avec le personnel ?" }
+      ]}
+    ],
+    quiz: null
+  }
+];
+
+const GLOSSAIRE = [
+  { acro: "ERP", def: "Établissement Recevant du Public", expl: "Bâtiments accessibles au public (commerces, écoles, hôpitaux…)" },
+  { acro: "DUERP", def: "Document Unique d'Évaluation des Risques Professionnels", expl: "Document obligatoire recensant les risques et mesures de prévention" },
+  { acro: "SSI", def: "Système de Sécurité Incendie", expl: "Ensemble des équipements permettant de détecter, alerter et gérer un incendie" },
+  { acro: "RIA", def: "Robinet d'Incendie Armé", expl: "Dispositif permettant d'attaquer un feu naissant" },
+  { acro: "BAES", def: "Bloc Autonome d'Éclairage de Sécurité", expl: "Éclairage de secours permettant l'évacuation en cas de panne électrique" },
+  { acro: "EPI", def: "Équipement de Première Intervention", expl: "Matériel destiné à lutter contre un départ de feu (extincteurs, couvertures anti-feu)" },
+  { acro: "EPC", def: "Équipement de Protection Collective", expl: "Moyens de prévention collective (portes coupe-feu, désenfumage)" },
+  { acro: "PSH/PMR", def: "Personne en Situation de Handicap / à Mobilité Réduite", expl: "Nécessite une zone de refuge et du matériel d'évacuation adapté" },
+  { acro: "IGH", def: "Immeuble de Grande Hauteur", expl: "Bâtiment dont le plancher bas du dernier niveau est à plus de 28m (habitations) ou 50m" },
+  { acro: "SDIS", def: "Service Départemental d'Incendie et de Secours", expl: "Organisme regroupant les sapeurs-pompiers d'un département" }
+];
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let session = { enseigne: '', date: '', formateur: '', stagiaires: [] };
+let state = {};
+let currentChapterId = null;
+
+function getChapterState(id) {
+  if (!state[id]) state[id] = { points: {}, scores: {}, obsComment: '' };
+  return state[id];
+}
+function getPointKey(sIdx, pIdx) { return `${sIdx}_${pIdx}`; }
+function chapterProgress(chapter) {
+  const cs = getChapterState(chapter.id);
+  const total = chapter.sections.reduce((n, s) => n + s.points.length, 0);
+  return { filled: Object.keys(cs.points).length, total };
+}
+function quizScores(chapter) {
+  if (!chapter.quiz) return null;
+  const cs = getChapterState(chapter.id);
+  return session.stagiaires.map((name, si) => {
+    let score = 0;
+    for (let qi = 0; qi < chapter.quiz.questions.length; qi++) score += (cs.scores[qi] || {})[si] || 0;
+    return { name, score, max: chapter.quiz.questions.length * 2 };
+  });
+}
+function scoreBadge(score, max) {
+  if (score >= max * 5 / 6) return 'acquis';
+  if (score >= max * 3 / 6) return 'en-cours';
+  return 'non-acquis';
+}
+function scoreBadgeLabel(l) { return { acquis: 'ACQUIS', 'en-cours': 'EN COURS', 'non-acquis': 'NON ACQUIS' }[l]; }
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('[id^="screen-"]').forEach(el => el.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function updateStagiairesFields() {
+  const nb = parseInt(document.getElementById('nb-stagiaires').value);
+  const container = document.getElementById('stagiaires-fields');
+  container.innerHTML = '';
+  for (let i = 0; i < nb; i++) {
+    const div = document.createElement('div');
+    div.innerHTML = `<label>Stagiaire ${i+1}</label><input type="text" class="stag-name" placeholder="Prénom NOM">`;
+    container.appendChild(div);
+  }
+}
+function startSession() {
+  session.enseigne = document.getElementById('enseigne').value || 'Non renseigné';
+  session.date = document.getElementById('date-formation').value || new Date().toISOString().split('T')[0];
+  session.formateur = document.getElementById('formateur').value || 'Non renseigné';
+  session.stagiaires = Array.from(document.querySelectorAll('.stag-name'))
+    .map(i => i.value.trim() || 'Stagiaire')
+    .filter((_, idx) => idx < parseInt(document.getElementById('nb-stagiaires').value));
+  saveAll(); showChapters();
+}
+function showChapters() { renderBanner(); renderChapterList(); showScreen('chapters'); }
+function showChapter(id) {
+  currentChapterId = id;
+  const chapter = CHAPTERS.find(c => c.id === id);
+  document.getElementById('chapter-topbar-title').textContent = `${id}. ${chapter.title}`;
+  renderChapterDetail(chapter); showScreen('chapter');
+}
+function showSummary() { renderSummary(); showScreen('summary'); }
+function formatDate(d) { if (!d) return ''; const [y,m,day] = d.split('-'); return `${day}/${m}/${y}`; }
+
+// ═══════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════
+function renderBanner() {
+  const done = CHAPTERS.filter(c => { const p = chapterProgress(c); return p.filled >= p.total && p.total > 0; }).length;
+  document.getElementById('session-banner').innerHTML = `
+    <div class="info">
+      <strong>Enseigne :</strong> ${session.enseigne}<br>
+      <strong>Date :</strong> ${formatDate(session.date)} &nbsp;|&nbsp; <strong>Formateur :</strong> ${session.formateur}<br>
+      <strong>Stagiaires :</strong> ${session.stagiaires.join(', ')}
+    </div>
+    <div class="progress-bar" style="margin-top:.6rem"><div class="progress-fill" style="width:${Math.round(done/CHAPTERS.length*100)}%"></div></div>
+    <div style="font-size:.72rem;color:#7f1d1d;margin-top:.25rem">${done} / ${CHAPTERS.length} chapitres complétés</div>`;
+}
+function renderChapterList() {
+  const list = document.getElementById('chapter-list');
+  list.innerHTML = '';
+  CHAPTERS.forEach(chapter => {
+    const prog = chapterProgress(chapter);
+    const scores = quizScores(chapter);
+    const isDone = prog.filled >= prog.total && prog.total > 0;
+    const isPartial = prog.filled > 0 && !isDone;
+    const scoreText = scores ? scores.map(s => `${s.name.split(' ')[0]}: ${s.score}/${s.max}`).join(' · ') : '';
+    const item = document.createElement('div');
+    item.className = `chapter-item ${isDone?'done':''} ${isPartial?'partial':''}`;
+    item.onclick = () => showChapter(chapter.id);
+    item.innerHTML = `
+      <div class="chapter-num">${chapter.id}</div>
+      <div class="chapter-info">
+        <h2>${chapter.title}</h2>
+        <div class="quiz-score">${prog.filled}/${prog.total} points${scoreText?' · Quiz : '+scoreText:''}</div>
+      </div>
+      <div class="chapter-status" style="color:${isDone?'var(--green-btn)':isPartial?'var(--orange-btn)':'var(--gray)'}">${isDone?'✓':isPartial?'◑':'○'}</div>`;
+    list.appendChild(item);
+  });
+}
+function renderChapterDetail(chapter) {
+  const container = document.getElementById('chapter-content');
+  const cs = getChapterState(chapter.id);
+  let html = `<div class="chapter-header"><h2>🔥 ${chapter.id}. ${chapter.title}</h2><div class="obj"><strong>Objectif :</strong> ${chapter.objective}</div></div>`;
+
+  chapter.sections.forEach((section, sIdx) => {
+    html += `<div class="section-block"><div class="section-title">${section.title}</div>`;
+    section.points.forEach((point, pIdx) => {
+      const key = getPointKey(sIdx, pIdx);
+      const val = cs.points[key] || {};
+      const details = point.details ? `<ul class="point-details">${point.details.map(d=>`<li>${d}</li>`).join('')}</ul>` : '';
+      html += `<div class="point-item" id="point-${chapter.id}-${sIdx}-${pIdx}">
+        <div class="point-question">${point.text}</div>${details}
+        <div class="ons-buttons">
+          <button class="ons-btn oui ${val.v==='oui'?'active':''}" onclick="setONS(${chapter.id},${sIdx},${pIdx},'oui')">✓ OUI</button>
+          <button class="ons-btn non ${val.v==='non'?'active':''}" onclick="setONS(${chapter.id},${sIdx},${pIdx},'non')">✗ NON</button>
+          <button class="ons-btn so ${val.v==='so'?'active':''}" onclick="setONS(${chapter.id},${sIdx},${pIdx},'so')">— S/O</button>
+        </div>
+        <div class="comment-wrapper">
+          <textarea class="point-comment" id="ta-${chapter.id}-${sIdx}-${pIdx}" rows="2" placeholder="Commentaire / action corrective…" style="padding-right:2.4rem" onchange="setComment(${chapter.id},${sIdx},${pIdx},this.value)">${val.comment||''}</textarea>
+          <button class="mic-btn ${!SpeechRecognition?'no-support':''}" title="${SpeechRecognition?'Dicter un commentaire':'Utilise Chrome ou Edge'}"
+            onclick="toggleMic(this,document.getElementById('ta-${chapter.id}-${sIdx}-${pIdx}'),${chapter.id},${sIdx},${pIdx})">🎙</button>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  if (chapter.quiz) html += renderQuiz(chapter);
+
+  html += `<div class="obs-section">
+    <div class="section-title">Observations et recommandations générales</div>
+    <textarea style="width:100%;min-height:80px;font-family:inherit;font-size:.85rem;border:1.5px solid var(--border);border-radius:8px;padding:.5rem .7rem;resize:vertical" placeholder="Observations et recommandations pour cet établissement…" onchange="setObsComment(${chapter.id},this.value)">${cs.obsComment||''}</textarea>
+  </div>`;
+
+  if (chapter.id === CHAPTERS[CHAPTERS.length - 1].id) {
+    html += renderGlossaire();
+  }
+
+  const prev = CHAPTERS.find(c => c.id === chapter.id - 1);
+  const next = CHAPTERS.find(c => c.id === chapter.id + 1);
+  html += `<div class="chapter-nav">`;
+  if (prev) html += `<button class="btn-secondary" onclick="showChapter(${prev.id})">← ${prev.id}. ${prev.title.split(' ').slice(0,2).join(' ')}…</button>`;
+  if (next) html += `<button class="btn-primary" onclick="showChapter(${next.id})">${next.id}. ${next.title.split(' ').slice(0,2).join(' ')}… →</button>`;
+  else html += `<button class="btn-primary" onclick="showSummary()">Voir le bilan →</button>`;
+  html += `</div><br>`;
+  container.innerHTML = html;
+}
+
+function renderGlossaire() {
+  return `<div class="section-block" style="margin-top:.75rem">
+    <div class="section-title">📖 Glossaire Sécurité Incendie</div>
+    <table class="glossaire-table">
+      <tr><th>Acronyme</th><th>Définition</th><th>Explication</th></tr>
+      ${GLOSSAIRE.map(g=>`<tr><td><strong>${g.acro}</strong></td><td>${g.def}</td><td style="font-size:.75rem;color:#374151">${g.expl}</td></tr>`).join('')}
+    </table>
+  </div>`;
+}
+
+function renderQuiz(chapter) {
+  const cs = getChapterState(chapter.id);
+  const scores = quizScores(chapter);
+  let html = `<div class="quiz-section"><div class="quiz-header"><div><h2 style="font-size:.92rem">Quiz — ${chapter.quiz.title}</h2></div><div class="quiz-badge">Quiz 🔥</div></div>`;
+  chapter.quiz.questions.forEach((q, qi) => {
+    html += `<div class="quiz-question">
+      <div class="quiz-q-num">Question ${qi+1}</div>
+      <div class="quiz-q-text">${q.q}</div>
+      <div class="quiz-choices">${q.choices.map((c,ci)=>`
+        <label class="quiz-choice ${q.correct.includes(ci)?'correct-highlight':''}">
+          <input type="checkbox" disabled ${q.correct.includes(ci)?'checked':''}> ${c}
+          ${q.correct.includes(ci)?'<span style="margin-left:auto;color:var(--green);font-weight:700;font-size:.75rem">✓</span>':''}
+        </label>`).join('')}
+      </div>
+      <div style="font-size:.75rem;color:var(--green);background:var(--green-light);border-radius:6px;padding:.35rem .6rem;margin-bottom:.6rem">✓ Bonne réponse : <strong>${q.key}</strong></div>
+      <div style="font-size:.78rem;font-weight:600;color:#374151;margin-bottom:.35rem">Score par stagiaire :</div>
+      <div class="stagiaire-scores">${session.stagiaires.map((name,si)=>{
+        const s=(cs.scores[qi]||{})[si];
+        return `<div class="stag-score-block">
+          <div class="stag-score-label" title="${name}">${name.split(' ')[0]}</div>
+          <div class="score-btns">
+            <button class="score-btn ${s===0?'active-0':''}" onclick="setScore(${chapter.id},${qi},${si},0)">0</button>
+            <button class="score-btn ${s===2?'active-2':''}" onclick="setScore(${chapter.id},${qi},${si},2)">2</button>
+          </div></div>`;}).join('')}
+      </div></div>`;
+  });
+  html += `<div class="quiz-chapter-total">${scores.map(s=>{
+    const l=scoreBadge(s.score,s.max);
+    return `<div class="stag-total-chip ${l}">${s.name.split(' ')[0]} : ${s.score}/${s.max} — ${scoreBadgeLabel(l)}</div>`;
+  }).join('')}</div></div>`;
+  return html;
+}
+
+function renderSummary() {
+  const container = document.getElementById('summary-content');
+  let totalScores = session.stagiaires.map(() => ({ score: 0, max: 0 }));
+  let rows = '';
+  CHAPTERS.forEach(chapter => {
+    const prog = chapterProgress(chapter);
+    const scores = quizScores(chapter);
+    let scoresHtml = '';
+    if (scores) {
+      scores.forEach((s, si) => { const l=scoreBadge(s.score,s.max); totalScores[si].score+=s.score; totalScores[si].max+=s.max; scoresHtml+=`<span class="badge ${l}" style="margin-right:.25rem">${s.name.split(' ')[0]}: ${s.score}/${s.max}</span>`; });
+    } else scoresHtml = '<span style="color:var(--gray);font-size:.75rem">—</span>';
+    rows += `<tr><td><strong>${chapter.id}.</strong> ${chapter.title}</td><td>${prog.filled}/${prog.total}</td><td>${scoresHtml}</td></tr>`;
+  });
+
+  const globalHtml = session.stagiaires.map((name, si) => {
+    const t = totalScores[si]; const l = scoreBadge(t.score, t.max);
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid var(--border)">
+      <strong>${name}</strong>
+      <div><span style="font-size:1.1rem;font-weight:800">${t.score}/${t.max}</span><span class="badge ${l}" style="margin-left:.5rem">${scoreBadgeLabel(l)}</span></div></div>`;
+  }).join('');
+
+  let obsHtml = '';
+  CHAPTERS.forEach(ch => { const cs = getChapterState(ch.id); if (cs.obsComment) obsHtml += `<div style="margin-bottom:.5rem"><strong>${ch.id}. ${ch.title}</strong><br><span style="font-size:.82rem">${cs.obsComment}</span></div>`; });
+
+  container.innerHTML = `
+    <div class="summary-card">
+      <h2 style="margin-bottom:.75rem">🔥 Informations session</h2>
+      <div style="font-size:.85rem;line-height:1.8">
+        <strong>Enseigne :</strong> ${session.enseigne}<br>
+        <strong>Date :</strong> ${formatDate(session.date)}<br>
+        <strong>Formateur :</strong> ${session.formateur}<br>
+        <strong>Stagiaires :</strong> ${session.stagiaires.join(', ')}
+      </div>
+    </div>
+    <div class="summary-card"><h2 style="margin-bottom:.75rem">Résultats globaux</h2>${globalHtml}</div>
+    <div class="summary-card"><h2 style="margin-bottom:.75rem">Détail par chapitre</h2>
+      <div style="overflow-x:auto"><table class="summary-table">
+        <thead><tr><th>Chapitre</th><th>Points obs.</th><th>Score quiz</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </div>
+    ${obsHtml?`<div class="summary-card"><h2 style="margin-bottom:.75rem">Observations et recommandations</h2>${obsHtml}</div>`:''}
+    <button class="btn-primary" onclick="exportToWord()" style="margin-bottom:.5rem;background:#15803d">📄 Exporter en Word (.doc)</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem">
+      <button class="btn-primary" onclick="window.print()">🖨 Imprimer / PDF</button>
+      <button class="btn-secondary" onclick="exportSession()">📥 Sauvegarde (.json)</button>
+    </div>
+    <button class="btn-secondary" onclick="clearSession()" style="width:100%;margin-bottom:.5rem;color:var(--red);border-color:var(--red)">🗑 Nouvelle session</button>
+    <button class="btn-secondary" onclick="showChapters()" style="width:100%;margin-bottom:2rem">← Retour aux chapitres</button>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════════════════════
+function setONS(chId, sIdx, pIdx, val) {
+  const cs = getChapterState(chId); const key = getPointKey(sIdx, pIdx);
+  if (!cs.points[key]) cs.points[key] = {};
+  cs.points[key].v = val;
+  const container = document.getElementById(`point-${chId}-${sIdx}-${pIdx}`);
+  if (container) { container.querySelectorAll('.ons-btn').forEach(b=>b.classList.remove('active')); container.querySelector(`.ons-btn.${val}`).classList.add('active'); }
+  saveAll();
+}
+function setComment(chId, sIdx, pIdx, val) {
+  const cs = getChapterState(chId); const key = getPointKey(sIdx, pIdx);
+  if (!cs.points[key]) cs.points[key] = {};
+  cs.points[key].comment = val; saveAll();
+}
+function setScore(chId, qi, si, score) {
+  const cs = getChapterState(chId);
+  if (!cs.scores[qi]) cs.scores[qi] = {};
+  cs.scores[qi][si] = score;
+  const chapter = CHAPTERS.find(c=>c.id===chId);
+  const container = document.getElementById('chapter-content');
+  const quizEl = container ? container.querySelector('.quiz-section') : null;
+  if (quizEl) { const tmp = document.createElement('div'); tmp.innerHTML = renderQuiz(chapter); quizEl.replaceWith(tmp.firstElementChild); }
+  saveAll();
+}
+function setObsComment(chId, val) { getChapterState(chId).obsComment = val; saveAll(); }
+
+// ═══════════════════════════════════════════════════════
+// RECONNAISSANCE VOCALE
+// ═══════════════════════════════════════════════════════
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null, activeTextarea = null, micBtn = null, micTip = null;
+function initSpeech() {
+  micTip = document.createElement('div'); micTip.className = 'mic-tip'; micTip.textContent = '🎙 Parle maintenant… (tap pour arrêter)'; document.body.appendChild(micTip);
+  if (!SpeechRecognition) return;
+  recognition = new SpeechRecognition(); recognition.lang = 'fr-FR'; recognition.continuous = true; recognition.interimResults = true;
+  let finalText = '';
+  recognition.onstart = () => { if (micBtn) micBtn.classList.add('listening'); micTip.classList.add('visible'); };
+  recognition.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) { if (e.results[i].isFinal) finalText += e.results[i][0].transcript + ' '; else interim = e.results[i][0].transcript; }
+    if (activeTextarea) { activeTextarea.value = (activeTextarea._baseText||'') + finalText + interim; activeTextarea.dispatchEvent(new Event('change')); }
+  };
+  recognition.onerror = (e) => {
+    let msg = '❌ Micro indisponible.';
+    if (e.error==='not-allowed') msg = '❌ Accès au micro refusé.';
+    else if (e.error==='network') msg = '❌ Connexion internet requise.';
+    showSaveToast(msg); stopListening();
+  };
+  recognition.onend = () => stopListening();
+}
+function toggleMic(btn, textarea) {
+  if (!recognition) { showSaveToast('❌ Utilise Chrome ou Edge pour la dictée.'); return; }
+  btn.classList.contains('listening') ? stopListening() : startListening(btn, textarea);
+}
+function startListening(btn, textarea) {
+  if (micBtn && micBtn !== btn) stopListening();
+  activeTextarea = textarea; micBtn = btn; textarea._baseText = textarea.value ? textarea.value.trimEnd()+' ' : '';
+  recognition.start();
+}
+function stopListening() {
+  try { recognition && recognition.stop(); } catch(e) {}
+  if (micBtn) micBtn.classList.remove('listening');
+  if (micTip) micTip.classList.remove('visible');
+  if (activeTextarea) activeTextarea._baseText = undefined;
+  activeTextarea = null; micBtn = null;
+}
+
+// ═══════════════════════════════════════════════════════
+// SAUVEGARDE
+// ═══════════════════════════════════════════════════════
+const STORAGE_KEY = 'dpn_incendie_session';
+let toastTimer = null;
+function showSaveToast(msg) {
+  let toast = document.getElementById('save-toast');
+  if (!toast) { toast = document.createElement('div'); toast.id = 'save-toast'; toast.style.cssText = 'position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:.5rem 1rem;border-radius:20px;font-size:.8rem;font-weight:600;z-index:9999;transition:opacity .3s;pointer-events:none;white-space:nowrap'; document.body.appendChild(toast); }
+  toast.textContent = msg; toast.style.opacity = '1';
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>toast.style.opacity='0', 2500);
+}
+function saveAll() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ session, state, savedAt: new Date().toISOString() })); showSaveToast('💾 Sauvegardé automatiquement'); } catch(e) {}
+}
+function loadFromStorage() {
+  try { const raw = localStorage.getItem(STORAGE_KEY); if (!raw) return false; const data = JSON.parse(raw); if (!data.session?.stagiaires) return false; session = data.session; state = data.state||{}; return true; } catch(e) { return false; }
+}
+function exportSession() {
+  const data = JSON.stringify({ session, state, exportedAt: new Date().toISOString(), version: '1.0', type: 'incendie' }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `Incendie_${(session.enseigne||'formation').replace(/[^a-zA-Z0-9]/g,'_')}_${session.date||'date'}.json`;
+  a.click(); URL.revokeObjectURL(a.href); showSaveToast('📥 Fichier téléchargé !');
+}
+function importSession(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => { try { const data = JSON.parse(e.target.result); session = data.session; state = data.state; saveAll(); showChapters(); showSaveToast('✅ Session chargée !'); } catch(err) { alert('Fichier invalide.'); } };
+  reader.readAsText(file); event.target.value = '';
+}
+function clearSession() {
+  if (!confirm('Effacer la session en cours ?')) return;
+  localStorage.removeItem(STORAGE_KEY); session = { enseigne:'', date:'', formateur:'', stagiaires:[] }; state = {};
+  document.getElementById('date-formation').value = new Date().toISOString().split('T')[0];
+  updateStagiairesFields(); showScreen('session');
+}
+
+// ═══════════════════════════════════════════════════════
+// EXPORT WORD
+// ═══════════════════════════════════════════════════════
+function exportToWord() {
+  const onsLabel = { oui:'✓ OUI', non:'✗ NON', so:'— S/O' };
+  const onsColor = { oui:'#15803d', non:'#b91c1c', so:'#c2410c' };
+  const lvlColor = { acquis:'#15803d', 'en-cours':'#c2410c', 'non-acquis':'#b91c1c' };
+
+  let html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'>
+<head><meta charset='utf-8'><style>
+  @page{margin:2cm 2.5cm;size:A4}body{font-family:Arial,sans-serif;font-size:10pt;color:#1e293b}
+  h1{font-size:15pt;color:#b91c1c;text-align:center;margin-bottom:4pt}h2{font-size:12pt;color:#b91c1c;border-bottom:1.5pt solid #b91c1c;padding-bottom:3pt;margin-top:16pt;margin-bottom:6pt}
+  h3{font-size:9pt;color:#6b7280;text-transform:uppercase;letter-spacing:.5pt;margin:10pt 0 4pt}
+  table{width:100%;border-collapse:collapse;margin-bottom:10pt;font-size:9pt}th{background:#fff1f2;color:#7f1d1d;font-weight:bold;padding:4pt 6pt;border:1pt solid #fecaca;text-align:left}
+  td{padding:4pt 6pt;border:1pt solid #e5e7eb;vertical-align:top}.section-row td{background:#f1f5f9;font-weight:bold;font-size:8.5pt;text-transform:uppercase;color:#b91c1c}
+  .quiz-block{background:#f8fafc;border:1pt solid #fecaca;padding:8pt;margin-top:8pt}.page-break{page-break-before:always}
+</style></head><body>`;
+
+  html += `<div style="text-align:center;padding:50pt 0 30pt">
+    <div style="font-size:32pt;font-weight:900;color:#b91c1c">DPN 🔥</div>
+    <h1>SUIVI DE FORMATION<br>SÉCURITÉ INCENDIE AU TRAVAIL</h1>
+    <div style="font-size:8.5pt;color:#6b7280">Version 1.2</div>
+  </div>
+  <table style="margin-bottom:20pt">
+    <tr><td style="background:#fff1f2;font-weight:bold;width:130pt;border:1pt solid #fecaca">Enseigne</td><td style="border:1pt solid #fecaca">${session.enseigne}</td></tr>
+    <tr><td style="background:#fff1f2;font-weight:bold;border:1pt solid #fecaca">Date de formation</td><td style="border:1pt solid #fecaca">${formatDate(session.date)}</td></tr>
+    <tr><td style="background:#fff1f2;font-weight:bold;border:1pt solid #fecaca">Formateur</td><td style="border:1pt solid #fecaca">${session.formateur}</td></tr>
+    <tr><td style="background:#fff1f2;font-weight:bold;border:1pt solid #fecaca">Stagiaires</td><td style="border:1pt solid #fecaca">${session.stagiaires.join(', ')}</td></tr>
+  </table>`;
+
+  CHAPTERS.forEach((chapter, idx) => {
+    const cs = getChapterState(chapter.id);
+    html += `<div class="${idx>0?'page-break':''}"></div>`;
+    html += `<h2>${chapter.id}. ${chapter.title}</h2>`;
+    html += `<div style="font-size:9pt;margin-bottom:8pt"><strong>Objectif :</strong> ${chapter.objective}</div>`;
+    html += `<table><tr><th style="width:52%">Point à observer</th><th style="width:11%;text-align:center">Réponse</th><th style="width:37%">Commentaires</th></tr>`;
+    chapter.sections.forEach((section, sIdx) => {
+      html += `<tr class="section-row"><td colspan="3">${section.title}</td></tr>`;
+      section.points.forEach((point, pIdx) => {
+        const val = (cs.points[getPointKey(sIdx,pIdx)])||{};
+        const v = val.v||''; let txt = point.text;
+        if (point.details) txt += '<br><span style="font-size:8pt;color:#6b7280">'+point.details.map(d=>'• '+d).join('<br>')+'</span>';
+        html += `<tr><td>${txt}</td><td style="text-align:center;font-weight:bold;color:${v?onsColor[v]:'#9ca3af'}">${v?onsLabel[v]:'—'}</td><td style="font-size:8.5pt">${val.comment||''}</td></tr>`;
+      });
+    });
+    html += `</table>`;
+    if (chapter.quiz) {
+      const scores = quizScores(chapter);
+      html += `<div class="quiz-block"><h3 style="margin-top:0;color:#b91c1c">Quiz — ${chapter.quiz.title}</h3><table>
+        <tr><th style="width:40%">Question</th><th style="width:35%">✓ Bonne réponse</th>${session.stagiaires.map(s=>`<th style="text-align:center">${s.split(' ')[0]}</th>`).join('')}</tr>`;
+      chapter.quiz.questions.forEach((q,qi) => {
+        html += `<tr><td style="font-size:8.5pt"><strong>${qi+1}.</strong> ${q.q}</td><td style="font-size:8pt;color:#15803d">${q.key}</td>
+          ${session.stagiaires.map((_,si)=>{const sc=(cs.scores[qi]||{})[si];return `<td style="text-align:center;font-weight:bold;color:${sc===2?'#15803d':sc===0?'#b91c1c':'#9ca3af'}">${sc!==undefined?sc+'/2':'—'}</td>`;}).join('')}</tr>`;
+      });
+      html += `<tr style="background:#f1f5f9"><td colspan="2" style="font-weight:bold">Total /6</td>
+        ${scores.map(s=>{const l=scoreBadge(s.score,s.max);return `<td style="text-align:center;font-weight:bold;color:${lvlColor[l]}">${s.score}/6 — ${scoreBadgeLabel(l)}</td>`;}).join('')}</tr>`;
+      html += `</table></div>`;
+    }
+    if (cs.obsComment) html += `<div style="margin-top:8pt;padding:6pt 10pt;background:#fff7ed;border-left:3pt solid #c2410c;font-size:9pt"><strong>Observations :</strong> ${cs.obsComment}</div>`;
+  });
+
+  // Bilan
+  let totalScores = session.stagiaires.map(()=>({score:0,max:0}));
+  CHAPTERS.forEach(ch=>{const sc=quizScores(ch);if(sc)sc.forEach((s,si)=>{totalScores[si].score+=s.score;totalScores[si].max+=s.max;});});
+  html += `<div class="page-break"></div><h2 style="font-size:14pt">Bilan de formation</h2>
+  <h3>Résultats globaux</h3><table>
+    <tr><th>Stagiaire</th><th style="text-align:center">Score total</th><th>Niveau</th></tr>
+    ${session.stagiaires.map((name,si)=>{const t=totalScores[si];const l=scoreBadge(t.score,t.max);return `<tr><td><strong>${name}</strong></td><td style="text-align:center;font-weight:bold">${t.score}/${t.max}</td><td style="font-weight:bold;color:${lvlColor[l]}">${scoreBadgeLabel(l)}</td></tr>`;}).join('')}
+  </table>
+  <h3>Détail par chapitre</h3><table>
+    <tr><th>Chapitre</th><th style="text-align:center">Points obs.</th>${session.stagiaires.map(s=>`<th style="text-align:center">Quiz ${s.split(' ')[0]}</th>`).join('')}</tr>
+    ${CHAPTERS.map(ch=>{const prog=chapterProgress(ch);const sc=quizScores(ch);return `<tr><td>${ch.id}. ${ch.title}</td><td style="text-align:center">${prog.filled}/${prog.total}</td>${session.stagiaires.map((_,si)=>{if(!sc)return`<td style="text-align:center;color:#9ca3af">—</td>`;const l=scoreBadge(sc[si].score,sc[si].max);return`<td style="text-align:center;font-weight:bold;color:${lvlColor[l]}">${sc[si].score}/6</td>`;}).join('')}</tr>`;}).join('')}
+  </table>
+  <div style="margin-top:30pt;font-size:8pt;color:#9ca3af;text-align:right">Document généré le ${new Date().toLocaleDateString('fr-FR')} – Application DPN Formation Incendie</div>
+  </body></html>`;
+
+  const blob = new Blob(['﻿'+html],{type:'application/msword;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `Incendie_${(session.enseigne||'formation').replace(/[^a-zA-Z0-9]/g,'_')}_${session.date||'date'}.doc`;
+  a.click(); URL.revokeObjectURL(a.href); showSaveToast('📄 Document Word téléchargé !');
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+document.getElementById('date-formation').value = new Date().toISOString().split('T')[0];
+updateStagiairesFields();
+initSpeech();
+if (loadFromStorage() && session.stagiaires.length > 0) {
+  if (confirm(`📋 Session trouvée !\n\nEnseigne : ${session.enseigne}\nFormateur : ${session.formateur}\nStagiaires : ${session.stagiaires.join(', ')}\n\n→ Reprendre cette session ?`)) { showChapters(); }
+  else { session={enseigne:'',date:'',formateur:'',stagiaires:[]}; state={}; document.getElementById('date-formation').value=new Date().toISOString().split('T')[0]; updateStagiairesFields(); }
+}
+</script>
+</body>
+</html>
